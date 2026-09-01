@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product & Inventory — Production Schema (Interactive)</title>
+<style>
+:root{
+  --bg:#0b0f1a; --surface:#121826; --surface2:#0e1422; --line:#243044;
+  --txt:#e8edf6; --txt2:#9aa7bd; --txt3:#64748b;
+  --brand:#6366f1; --master:#0891b2; --product:#d97706; --link:#7c3aed; --inv:#10b981; --wh:#e11d48;
+  --in:#22c55e; --out:#ef4444; --upd:#3b82f6; --rem:#f59e0b;
+  --r-sm:8px; --r-md:12px; --r-lg:18px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);
+  display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+header{flex-shrink:0;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+header h1{margin:0;font-size:1.05rem;font-weight:700;color:#a5f3d0;letter-spacing:-.01em;}
+.chip-ch{font-size:.78rem;color:var(--txt2);background:var(--surface2);padding:4px 12px;border-radius:999px;border:1px solid var(--line);}
+.wrap{flex:1;min-height:0;display:flex;overflow:hidden;}
+#stage{position:relative;flex:1.5;min-width:0;margin:20px;background:radial-gradient(120% 120% at 50% 0%,#131a2b 0%,var(--surface2) 70%);
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;overflow:auto;
+  display:flex;flex-direction:column;align-items:safe center;justify-content:safe center;}
+#side{flex:1;min-width:300px;max-width:430px;padding:26px 28px;display:flex;flex-direction:column;border-left:1px solid var(--line);overflow:auto;}
+.kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700;margin-bottom:10px;}
+#stepTitle{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin:0 0 14px;line-height:1.18;color:#fff;}
+#stepBody{font-size:1rem;line-height:1.7;color:var(--txt2);flex:1;}
+#stepBody b{color:#fde68a;font-weight:600;}
+#stepBody code{background:#0a0f1c;color:#7dd3fc;padding:2px 7px;border-radius:6px;font-size:.88em;border:1px solid var(--line);}
+#stepBody ul{margin:8px 0;padding-left:18px;} #stepBody li{margin:3px 0;}
+
+.fx{animation:fx .42s cubic-bezier(.16,1,.3,1) both;}
+@keyframes fx{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+@media(prefers-reduced-motion:reduce){.fx{animation:none;}}
+
+/* table card */
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;min-width:248px;max-width:300px;box-shadow:0 8px 30px rgba(0,0,0,.35);}
+.tcard.hi{box-shadow:0 0 0 2px var(--rem),0 8px 30px rgba(0,0,0,.4);}
+.tcard .th{padding:11px 16px;font-weight:700;font-size:.95rem;color:#fff;}
+.g-master .th{background:linear-gradient(90deg,#0891b2,#0e7490);}
+.g-product .th{background:linear-gradient(90deg,#d97706,#b45309);}
+.g-link .th{background:linear-gradient(90deg,#7c3aed,#6d28d9);}
+.g-inv .th{background:linear-gradient(90deg,#10b981,#059669);}
+.g-wh .th{background:linear-gradient(90deg,#e11d48,#be123c);}
+.tcard ul{list-style:none;margin:0;padding:6px 0;}
+.tcard li{padding:4px 14px;font-size:.78rem;color:var(--txt);display:flex;align-items:center;gap:7px;font-family:'Consolas',monospace;}
+.tcard li .nm{min-width:0;}
+.tcard li .ty{margin-left:auto;color:var(--txt3);font-size:.7rem;white-space:nowrap;}
+.tcard li .tag{font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;}
+.tag-pk{background:#422006;color:#fbbf24;} .tag-fk{background:#0c2840;color:#7dd3fc;} .tag-uq{background:#3b1f47;color:#e9a5ff;}
+.tcard li.pk .nm{color:#fbbf24;} .tcard li.fk .nm{color:#7dd3fc;}
+.audit{padding:7px 14px;border-top:1px dashed var(--line);font-size:.68rem;color:var(--txt3);font-family:monospace;line-height:1.5;}
+.cardrow{display:flex;gap:16px;flex-wrap:wrap;justify-content:safe center;align-items:flex-start;padding:4px;}
+
+/* product grouped form */
+.pform{width:100%;max-width:720px;}
+.pform .pname{font-size:1.05rem;font-weight:700;color:var(--product);margin-bottom:12px;}
+.grp{margin:10px 0;padding:13px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);transition:opacity .3s,box-shadow .3s;}
+.grp.hi{box-shadow:0 0 0 2px var(--rem);}
+.grp.dim{opacity:.26;}
+.grp .gt{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:9px;font-weight:700;}
+.fields{display:flex;flex-wrap:wrap;gap:7px;}
+.f{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 10px;min-width:92px;}
+.f .fl{display:block;font-size:.63rem;color:#7dd3fc;font-family:monospace;}
+.f .fv{font-size:.82rem;font-weight:600;color:var(--txt);}
+.f.lv{border-left:3px solid;}
+.lv-mrp{border-color:#64748b;}.lv-u{border-color:#f59e0b;}.lv-mh{border-color:#7c3aed;}
+.lv-l1{border-color:#2563eb;}.lv-l2{border-color:#0891b2;}.lv-l3{border-color:#10b981;}
+
+/* stock calculator */
+.calc{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;justify-content:safe center;margin:6px 0;}
+.cchip{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:100px;padding:13px 11px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);transition:.35s;}
+.cchip .cl{font-size:.62rem;font-family:monospace;color:var(--txt3);}
+.cchip .cv{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;}
+.cchip .cn{font-size:.68rem;color:var(--txt2);}
+.cchip.dim{opacity:.3;filter:saturate(.4);}
+.c-prev{border-color:#475569;} .c-prev .cv{color:#94a3b8;}
+.c-in{border-color:#22c55e;box-shadow:0 0 20px rgba(34,197,94,.18);} .c-in .cv{color:#4ade80;}
+.c-upd{border-color:#3b82f6;box-shadow:0 0 20px rgba(59,130,246,.18);} .c-upd .cv{color:#60a5fa;}
+.c-out{border-color:#ef4444;box-shadow:0 0 20px rgba(239,68,68,.18);} .c-out .cv{color:#f87171;}
+.c-rem{border-color:#f59e0b;box-shadow:0 0 24px rgba(245,158,11,.22);} .c-rem .cv{color:#fbbf24;}
+.op{font-size:1.5rem;font-weight:800;color:var(--txt3);padding-bottom:22px;}
+.batchbar{display:inline-flex;gap:16px;margin-bottom:18px;padding:9px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);font-size:.8rem;flex-wrap:wrap;justify-content:center;}
+.batchbar span{color:var(--txt2);} .batchbar b{color:#a5f3d0;font-family:monospace;}
+.ledger{border-collapse:collapse;margin-top:20px;font-size:.8rem;min-width:560px;background:var(--surface);border-radius:var(--r-md);overflow:hidden;}
+.ledger th{background:#0e1626;color:#a5f3d0;padding:8px 11px;font-weight:700;border-bottom:1px solid var(--line);}
+.ledger td{padding:8px 11px;text-align:center;border-bottom:1px solid var(--line);color:var(--txt2);font-family:monospace;}
+.ledger tr.cur td{background:rgba(245,158,11,.08);color:var(--txt);}
+.totbox{margin-top:18px;display:inline-flex;align-items:center;gap:10px;padding:11px 20px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.4);border-radius:var(--r-md);font-size:1rem;}
+.totbox b{color:#6ee7b7;font-size:1.25rem;}
+
+/* production rules panel */
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:760px;}
+.rule{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:var(--r-sm);padding:12px 14px;}
+.rule h4{margin:0 0 6px;font-size:.9rem;color:#c7d2fe;}
+.rule p{margin:0;font-size:.8rem;color:var(--txt2);line-height:1.55;}
+.rule code{background:#0a0f1c;color:#7dd3fc;padding:1px 5px;border-radius:4px;font-size:.85em;}
+
+/* ER */
+.erwrap{position:relative;width:980px;height:640px;}
+.erbox{position:absolute;width:160px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);font-size:.64rem;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+.erbox h5{margin:0;padding:6px 9px;color:#fff;font-size:.72rem;border-radius:7px 7px 0 0;}
+.erbox ul{margin:0;padding:5px 9px;list-style:none;}
+.erbox li{padding:1px 0;color:var(--txt2);font-family:monospace;}
+.erbox li.pk{color:#fbbf24;} .erbox li.fk{color:#7dd3fc;}
+.eg-master h5{background:#0891b2;}.eg-product h5{background:#d97706;}.eg-link h5{background:#7c3aed;}.eg-inv h5{background:#10b981;}.eg-wh h5{background:#e11d48;}
+svg.erl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+footer{flex-shrink:0;padding:13px 24px;background:var(--surface);border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+button{background:var(--inv);color:#04130c;border:none;padding:10px 20px;border-radius:var(--r-sm);font-size:.95rem;font-weight:700;cursor:pointer;transition:transform .12s,filter .2s;}
+button:hover:not(:disabled){filter:brightness(1.08);} button:active:not(:disabled){transform:scale(.97);}
+button:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
+#back{background:var(--brand);color:#fff;} #reset{background:#475569;color:#fff;}
+.prog{flex:1;height:7px;background:var(--line);border-radius:5px;overflow:hidden;min-width:120px;}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--inv));width:0;transition:width .4s;}
+.count{font-size:.85rem;color:var(--txt2);min-width:62px;text-align:right;}
+@media(max-width:1340px){
+  html,body{height:auto;overflow:auto;}
+  .wrap{flex-direction:column;overflow:visible;}
+  #stage,#side{overflow:visible;}
+  #side{max-width:none;border-left:none;border-top:1px solid var(--line);}
+  #stage{margin:14px;}
+  .erwrap{transform:scale(.72);transform-origin:top center;height:470px;}
+  .rules{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<header><h1>📦 Product &amp; Inventory — Production Schema</h1><span class="chip-ch" id="chapter"></span></header>
+<div class="wrap">
+  <div id="stage"></div>
+  <div id="side">
+    <div class="kicker" id="kicker"></div>
+    <h2 id="stepTitle"></h2>
+    <div id="stepBody"></div>
+  </div>
+</div>
+<footer>
+  <button id="back">◀ Back</button>
+  <button id="next">Next ▶</button>
+  <button id="play">▶ Auto</button>
+  <button id="reset">↻ Reset</button>
+  <div class="prog"><i id="bar"></i></div>
+  <span class="count" id="count"></span>
+</footer>
+
+<script>
+// audit columns on EVERY table
+const AUDIT='created_at · updated_at · deleted_at · created_by · updated_by';
+// [name, type, tag]  tag: pk | fk | uq | ''
+const T={
+ Category:{g:'g-master',c:[['id','uuid','pk'],['name','varchar'],['slug','varchar','uq'],['prefix','varchar'],['description','text'],['image','varchar'],['sort_order','int'],['is_active','bool']]},
+ Sub_Category:{g:'g-master',c:[['id','uuid','pk'],['category_id','uuid','fk'],['name','varchar'],['slug','varchar','uq'],['prefix','varchar'],['description','text'],['image','varchar'],['sort_order','int'],['is_active','bool']]},
+ Packaging:{g:'g-master',c:[['id','uuid','pk'],['name','varchar'],['code','varchar'],['is_active','bool']]},
+ Unit:{g:'g-master',c:[['id','uuid','pk'],['name','varchar'],['short_code','varchar'],['is_active','bool']]},
+ Company:{g:'g-master',c:[['id','uuid','pk'],['name','varchar'],['slug','varchar','uq'],['logo','varchar'],['gstin','varchar'],['contact_email','varchar'],['contact_phone','varchar'],['address','text'],['is_active','bool']]},
+ Disease_Growth:{g:'g-master',c:[['id','uuid','pk'],['sub_category_id','uuid','fk'],['name','varchar'],['description','text'],['image','varchar'],['is_active','bool']]},
+ Crop:{g:'g-master',c:[['id','uuid','pk'],['name','varchar'],['slug','varchar','uq'],['image','varchar'],['season','varchar'],['is_active','bool']]},
+ Location:{g:'g-wh',c:[['id','uuid','pk'],['parent_id','uuid','fk'],['name','varchar'],['type','enum'],['level','int'],['pincode','varchar'],['address','text'],['is_active','bool']]},
+ Product_Crop:{g:'g-link',c:[['id','uuid','pk'],['product_id','uuid','fk'],['crop_id','uuid','fk'],['dose','varchar']]},
+ Product_Image:{g:'g-link',c:[['id','uuid','pk'],['product_id','uuid','fk'],['url','varchar'],['alt_text','varchar'],['is_banner','bool'],['sort_order','int']]},
+ Product_Stock:{g:'g-inv',c:[['id','uuid','pk'],['product_id','uuid','fk'],['location_id','uuid','fk'],['batch_no','varchar'],['mf_date','date'],['exp_date','date'],['movement_type','enum'],['quantity','int'],['previous_stock','int'],['update_stock','int'],['remaining_qty','int'],['unit_cost','numeric'],['reference_no','varchar'],['remark','text']]},
+};
+function tableCard(name,hi){
+  const t=T[name];
+  let h=`<div class="tcard ${t.g} ${hi?'hi':''}"><div class="th">${name}</div><ul>`;
+  t.c.forEach(([n,ty,tag])=>{
+    const cls=tag==='pk'?'pk':(tag==='fk'?'fk':'');
+    const badge=(tag&&tag!=='')?`<span class="tag tag-${tag}">${tag.toUpperCase()}</span>`:'';
+    h+=`<li class="${cls}">${badge}<span class="nm">${n}</span><span class="ty">${ty}</span></li>`;
+  });
+  return h+`</ul><div class="audit">+ ${AUDIT}</div></div>`;
+}
+function cards(names,hi){return `<div class="cardrow fx">${names.map(n=>tableCard(n,hi&&hi.includes(n))).join('')}</div>`;}
+
+// ===== product form =====
+const PG=[
+ {g:'identity',gt:'Identity & codes',its:[['id','uuid'],['name','Rakshak'],['slug','rakshak'],['sku','AG-RK-123'],['prefix','Ag-Rakshak123'],['qrcode','QR-123'],['barcode','89012345']]},
+ {g:'classify',gt:'Classification (FK)',its:[['category_id','Agriculture'],['sub_category_id','Insecticide'],['company_id','AgroCorp'],['disease_growth_id','Aphid']]},
+ {g:'pack',gt:'Packaging & Unit',its:[['packing_id','Bottle'],['unit_id','ml'],['pack_size','250']]},
+ {g:'price',gt:'Pricing (franchise levels) — numeric(10,2)',its:[['mrp','1000','lv-mrp'],['cost_price','660','lv-mrp'],['selling_price','800·GST inc','lv-u'],['mh_price','685','lv-mh'],['l1_price','700','lv-l1'],['l2_price','725','lv-l2'],['l3_price','750','lv-l3']]},
+ {g:'tax',gt:'Tax / GST',its:[['gst','10%'],['hsn_code','3808'],['tax_type','inclusive']]},
+ {g:'points',gt:'Points',its:[['pv','20'],['gv','10'],['nv','0']]},
+ {g:'invctrl',gt:'Inventory control',its:[['total_stock','70'],['min_stock_level','20'],['reorder_level','50']]},
+ {g:'content',gt:'Content',its:[['short_description','Pest control'],['description','Sucking pests se suraksha'],['technical_desc','Imidacloprid 17.8% SL']]},
+ {g:'status',gt:'Compliance & status',its:[['license_no','CIB-2291'],['status','active'],['is_active','true'],['is_featured','false'],['published_at','date']]},
+ {g:'seo',gt:'SEO & flexible',its:[['meta_title','Rakshak…'],['meta_description','Buy…'],['attributes','jsonb']]},
+];
+function productForm(active){
+  let h='<div class="pform fx"><div class="pname">📦 Product · table: Product</div>';
+  PG.forEach(s=>{const on=active&&active.includes(s.g);
+    h+=`<div class="grp ${on?'hi':''} ${active&&!on?'dim':''}"><div class="gt">${s.gt}</div><div class="fields">`;
+    s.its.forEach(it=>{const lv=it[2]?('f lv '+it[2]):'f';h+=`<div class="${lv}"><span class="fl">${it[0]}</span><span class="fv">${it[1]}</span></div>`;});
+    h+='</div></div>';});
+  return h+`<div class="audit" style="border:none;padding-left:0">+ ${AUDIT}</div></div>`;
+}
+function linkCrop(){return `<div class="cardrow fx">${tableCard('Crop')}${tableCard('Product_Crop',true)}</div>`;}
+function linkImg(){return `<div class="cardrow fx">${tableCard('Product_Image',true)}</div>`;}
+
+// ===== Location (self-referencing hierarchy = franchise tree) =====
+function locationView(){
+  const rows=[
+   ['1','—','Main Warehouse','warehouse','0','—',0],
+   ['2','1','Mini-WH A','mini_warehouse','1','p7',1],
+   ['3','2','Shop S1','shop','1','p8',2],
+   ['4','2','Shop S3','shop','1','p5,p6',2],
+   ['5','4','Shop S3.1','shop','2','p4',3],
+   ['6','4','Shop S3.2','shop','3','p1,p2,p3',3],
+  ];
+  const ic={warehouse:'🏭',mini_warehouse:'🏬',shop:'🏪'};
+  let h='<div class="fx" style="display:flex;gap:26px;flex-wrap:wrap;justify-content:safe center;align-items:flex-start;width:100%;">';
+  h+='<div style="display:flex;flex-direction:column;gap:7px;">';
+  rows.forEach(r=>{h+=`<div style="margin-left:${r[6]*20}px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--wh);border-radius:8px;padding:7px 13px;font-size:.82rem;white-space:nowrap;">${ic[r[3]]} <b style="color:#fff">${r[2]}</b> <span style="color:var(--txt3);font-family:monospace;font-size:.7rem;"> id ${r[0]} · parent ${r[1]} · lvl ${r[4]}</span></div>`;});
+  h+='</div>';
+  h+='<table class="ledger"><tr><th>id</th><th>parent_id</th><th>name</th><th>type</th><th>level</th><th>pincode</th></tr>';
+  rows.forEach(r=>{h+=`<tr><td>${r[0]}</td><td>${r[1]}</td><td style="text-align:left">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td></tr>`;});
+  h+='</table></div>';
+  return h;
+}
+
+// ===== stock calculator =====
+function chip(label,name,val,cls,dim){return `<div class="cchip c-${cls} ${dim?'dim':''}"><span class="cl">${label}</span><span class="cv">${val}</span><span class="cn">${name}</span></div>`;}
+function stockView(o){
+  let h='<div class="fx" style="display:flex;flex-direction:column;align-items:center;width:100%;">';
+  if(o.batch) h+=`<div class="batchbar"><span>batch_no <b>${o.batch}</b></span><span>mf <b>${o.mf}</b></span><span>exp <b>${o.exp}</b></span><span>type <b>${o.mv}</b></span></div>`;
+  h+='<div class="calc">'+
+    chip('previous_stock','Pichhla',o.prev,'prev')+'<div class="op">+</div>'+
+    chip('quantity','Naya aaya',o.came,'in',o.phase==='out')+'<div class="op">=</div>'+
+    chip('update_stock','Total',o.upd,'upd')+'<div class="op">−</div>'+
+    chip('( bika )','Bika',o.sold,'out',o.phase==='in')+'<div class="op">=</div>'+
+    chip('remaining_qty','Bacha',o.rem,'rem')+'</div>';
+  if(o.rows){h+='<table class="ledger"><tr><th>batch_no</th><th>movement</th><th>quantity</th><th>previous</th><th>update</th><th>remaining</th></tr>';
+    o.rows.forEach((r,i)=>{h+=`<tr class="${i===o.cur?'cur':''}"><td>${r[0]}</td><td>${r[5]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`;});h+='</table>';}
+  if(o.total!=null) h+=`<div class="totbox">Product.total_stock = <b>${o.total}</b></div>`;
+  return h+'</div>';
+}
+
+// ===== production rules =====
+function rulesView(){
+  const R=[
+   ['🔑 Primary key','<code>uuid</code> PK har table me (auto, guess-proof). Bigint bhi chalega.'],
+   ['🕒 Timestamps','<code>created_at / updated_at / deleted_at</code> = <code>timestamptz</code>. deleted_at = soft delete (data rehta).'],
+   ['👤 Audit by','<code>created_by / updated_by</code> = kis user ne banaya/badla (FK users).'],
+   ['💰 Money','Saare price <code>numeric(10,2)</code> — float kabhi nahi (rounding error).'],
+   ['🔒 Unique','<code>sku, slug, barcode, gstin</code> unique. Same level pincode unique.'],
+   ['⚡ Indexes','Har FK pe index + filter columns (category_id, status, is_active) pe.'],
+   ['🏷️ Status enum','<code>status</code> = draft / active / inactive / archived. <code>is_active</code> bool.'],
+   ['📦 Stock movement','<code>movement_type</code> = in / out / adjustment / return / transfer. Har event ek row.'],
+   ['🏬 Location scope','<code>location_id</code> Product_Stock me — kis node (WH/mini-WH/shop) ka stock. Location table self-referencing (parent_id) = pura franchise tree.'],
+   ['🧩 Flexible','<code>attributes jsonb</code> — extra fields bina schema badle.'],
+  ];
+  return `<div class="rules fx">${R.map(r=>`<div class="rule"><h4>${r[0]}</h4><p>${r[1]}</p></div>`).join('')}</div>`;
+}
+
+// ===== ER =====
+function erView(){
+  const B={
+   Category:{x:20,y:10,g:'eg-master',f:['#id','name','slug','prefix']},
+   Sub_Category:{x:205,y:10,g:'eg-master',f:['#id','*category_id','name','slug']},
+   Disease_Growth:{x:400,y:10,g:'eg-master',f:['#id','*sub_category_id','name']},
+   Company:{x:600,y:10,g:'eg-master',f:['#id','name','gstin']},
+   Crop:{x:800,y:10,g:'eg-master',f:['#id','name','slug']},
+   Packaging:{x:20,y:215,g:'eg-master',f:['#id','name','code']},
+   Unit:{x:20,y:345,g:'eg-master',f:['#id','name','short_code']},
+   Product:{x:330,y:200,g:'eg-product',f:['#id','sku','slug','*category_id','*sub_category_id','*packing_id','*unit_id','*company_id','*disease_growth_id','prices…','hsn_code','status','total_stock']},
+   Product_Crop:{x:620,y:200,g:'eg-link',f:['#id','*product_id','*crop_id']},
+   Product_Image:{x:330,y:500,g:'eg-link',f:['#id','*product_id','url','is_banner']},
+   Product_Stock:{x:590,y:430,g:'eg-inv',f:['#id','*product_id','*location_id','batch_no','mf_date','exp_date','movement_type','remaining_qty']},
+   Location:{x:800,y:455,g:'eg-wh',f:['#id','*parent_id','name','type','level','pincode']},
+  };
+  const rel=[['Sub_Category','Category'],['Disease_Growth','Sub_Category'],['Product','Category'],['Product','Sub_Category'],['Product','Packaging'],['Product','Unit'],['Product','Company'],['Product','Disease_Growth'],['Product_Crop','Product'],['Product_Crop','Crop'],['Product_Image','Product'],['Product_Stock','Product'],['Product_Stock','Location'],['Location','Location']];
+  let boxes='';
+  for(const k in B){const b=B[k];
+    boxes+=`<div class="erbox ${b.g}" id="er-${k}" style="left:${b.x}px;top:${b.y}px"><h5>${k}</h5><ul>`+
+     b.f.map(f=>{const cls=f[0]==='#'?'pk':(f[0]==='*'?'fk':'');return `<li class="${cls}">${f.replace(/^[#*]/,'')}</li>`;}).join('')+'</ul></div>';
+  }
+  setTimeout(()=>{const svg=document.getElementById('ersvg');if(!svg)return;
+    const wrap=document.getElementById('erwrap').getBoundingClientRect();let s='';
+    rel.forEach(([a,b])=>{const A=document.getElementById('er-'+a),Bx=document.getElementById('er-'+b);if(!A||!Bx)return;
+      const ea=A.getBoundingClientRect(),eb=Bx.getBoundingClientRect();
+      const x1=ea.left-wrap.left+ea.width/2,y1=ea.top-wrap.top+ea.height/2,x2=eb.left-wrap.left+eb.width/2,y2=eb.top-wrap.top+eb.height/2;
+      s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#334155" stroke-width="1.5"/>`;});
+    svg.innerHTML=s;},50);
+  return `<div class="erwrap fx" id="erwrap"><svg class="erl" id="ersvg"></svg>${boxes}</div>`;
+}
+
+// ===== STEPS =====
+const S=[
+ {ch:'Setup',k:'Masters',t:'Pehle Masters banao',b:'Product se pehle <b>ready lists (masters)</b> chahiye. Production me har table me <code>uuid</code> id, <code>slug</code>, <code>is_active</code>, + audit columns (<code>created_at, updated_at, deleted_at, created_by, updated_by</code>).',v:()=>cards(['Category','Sub_Category','Packaging','Unit','Company','Disease_Growth','Crop'],[])},
+ {ch:'Setup',k:'Masters',t:'Category → Sub-Category',b:'<b>Category</b> ka <code>prefix</code> (Agriculture → Ag) + <code>slug</code> (SEO/URL). <b>Sub_Category</b> <code>category_id</code> se judti, apna prefix (Ins).',v:()=>cards(['Category','Sub_Category'],['Category','Sub_Category'])},
+ {ch:'Setup',k:'Masters',t:'Lookups',b:'<b>Packaging, Unit, Company</b> — chhoti lists. Company me <code>gstin</code>, contact. Sab me <code>is_active</code> (delete ki jagah disable).',v:()=>cards(['Packaging','Unit','Company'],['Packaging','Unit','Company'])},
+ {ch:'Setup',k:'Masters',t:'Crop & Disease',b:'<b>Crop</b> (+ season) aur <b>Disease_Growth</b> (<code>sub_category_id</code> se judta).',v:()=>cards(['Crop','Disease_Growth'],['Crop','Disease_Growth'])},
+
+ {ch:'Product',k:'Identity',t:'Identity + SKU + codes',b:'<b>Rakshak</b>. Production me <code>sku</code> (unique stock code) + <code>slug</code> + <code>qrcode</code> + <code>barcode</code>. Code auto: <b>Ag-Rakshak123</b>.',v:()=>productForm(['identity'])},
+ {ch:'Product',k:'Classify',t:'Classification (FK links)',b:'Category, Sub-category, Company, Disease — sab <code>_id</code> FK se masters se judte.',v:()=>productForm(['classify'])},
+ {ch:'Product',k:'Packaging',t:'Packaging, Unit, size',b:'Bottle · ml · <code>pack_size</code> 250.',v:()=>productForm(['pack'])},
+ {ch:'Product',k:'Pricing',t:'Pricing = franchise levels',b:'Franchise commission se judta. Sab <code>numeric(10,2)</code>:<br>• mrp 1000 · cost_price 660 · selling 800 (GST inc)<br>• mh 685 · l1 700 · l2 725 · l3 750<br><b>Ye system me fix nahi</b> — har product pe Admin apne level-rate set karta hai, commission usi se nikalta hai.',v:()=>productForm(['price'])},
+ {ch:'Product',k:'Cost @ Bill',t:'Billing ke waqt cost price customize',b:'<b>Naya rule:</b> inventory se bill banate waqt <code>cost_price</code> <b>change ki ja sakti hai</b>. Bill <b>usi customize ki hui cost</b> pe banega.<br>• Product master ka <code>cost_price</code> = sirf <b>default</b>, patthar ki lakeer nahi<br>• Har bill line me <b>us waqt ki cost save</b> hoti hai (audit ke liye)<br>• Purane bill ki cost baad me product master badalne se <b>nahi badalti</b>',v:()=>productForm(['price'])},
+ {ch:'Product',k:'Tax',t:'Tax / GST',b:'<code>gst</code> 10%, <code>hsn_code</code> 3808 (GST classification — zaroori India me), <code>tax_type</code> inclusive.',v:()=>productForm(['tax'])},
+ {ch:'Product',k:'Points',t:'Points (pv / gv / nv)',b:'Reward fields pv=20, gv=10, nv=0. Logic baad me.',v:()=>productForm(['points'])},
+ {ch:'Product',k:'Inventory ctrl',t:'Stock control fields',b:'<code>total_stock</code> (auto), <code>min_stock_level</code>, <code>reorder_level</code> — niche jaaye to alert/reorder.',v:()=>productForm(['invctrl'])},
+ {ch:'Product',k:'Status',t:'Compliance + status',b:'<code>license_no</code> (CIB reg — pesticide compliance), <code>status</code> (draft/active/inactive/archived), is_active, is_featured, published_at.',v:()=>productForm(['status'])},
+ {ch:'Product',k:'Product',t:'Pura Product record',b:'Saare groups ek saath = production Product. <code>attributes jsonb</code> = future extra fields bina schema todhe.',v:()=>productForm(null)},
+
+ {ch:'Links',k:'Many-to-many',t:'Product_Crop',b:'Ek product = multiple crop. Link table: <code>product_id + crop_id</code> (+ optional <code>dose</code>). Unique(product_id, crop_id).',v:()=>linkCrop()},
+ {ch:'Links',k:'Images',t:'Product_Image',b:'Ab <code>product_id</code> (kis product ki image) + <code>alt_text</code> + <code>sort_order</code>. <code>is_banner=true</code> = main image.',v:()=>linkImg()},
+
+ {ch:'Inventory',k:'Location',t:'Location = pura franchise tree (EK table)',b:'Confusion clear bhai: <b>Warehouse + saari Mini-WH + saari Shops (L1/L2/L3) — sab EK hi table</b> ("Location") ki rows hain.<br>• <code>type</code> = warehouse / mini_warehouse / shop<br>• <code>parent_id</code> = kiske neeche (apne hi table ko point = self-reference) → poora tree<br>• <code>level</code> = franchise level (0=WH, 1=L1, 2=L2, 3=L3)<br><b>⚠️ Badla hua:</b> S3.1 (L2) <b>aur</b> S3.2 (L3) — dono ka <code>parent_id</code> = <b>4 (Shop S3)</b>. L3 ab L2 ke neeche nahi. Dhyan do: <code>level</code> 2 aur 3 hai par tree me dono <b>same depth</b> pe hain.',v:()=>locationView()},
+ {ch:'Inventory',k:'Location',t:'Location table — columns',b:'Yahi franchise <b>Module-1 wala hierarchy</b> hai, ab DB table form me. Ek hi table sab levels handle karti (self-FK). Stock har node pe alag → Product_Stock me <code>location_id</code> se judta.',v:()=>cards(['Location'],['Location'])},
+ {ch:'Inventory',k:'Stock table',t:'Product_Stock — columns',b:'Har stock-event = ek row. Batch yahi me (<code>batch_no, mf_date, exp_date</code>) + <code>location_id</code> (kis node ka stock) + <code>movement_type</code> (in/out/adjustment/return/transfer) + <code>reference_no</code>.',v:()=>cards(['Product_Stock'],['Product_Stock'])},
+ {ch:'Inventory',k:'Stock IN',t:'1) Pehla stock aaya',b:'Batch <b>B2406</b>, 100 qty (movement=<b>in</b>). previous 0 + aaya 100 = <b>update 100</b>. Becha nahi → remaining 100.',
+   v:()=>stockView({batch:'B2406',mf:'10-Jan-26',exp:'09-Jan-28',mv:'in',prev:0,came:100,upd:100,sold:0,rem:100,phase:'in',rows:[['B2406',100,0,100,100,'in']],cur:0})},
+ {ch:'Inventory',k:'Stock OUT',t:'2) 10 bik gaye',b:'movement=<b>out</b>. update 100 − bika 10 = <b>remaining 90</b>. (bika = update − remaining)',
+   v:()=>stockView({batch:'B2406',mf:'10-Jan-26',exp:'09-Jan-28',mv:'out',prev:0,came:100,upd:100,sold:10,rem:90,phase:'out',rows:[['B2406',100,0,100,90,'out']],cur:0})},
+ {ch:'Inventory',k:'Stock IN',t:'3) Naya stock aaya',b:'30 qty aur (movement=<b>in</b>). previous = last remaining = <b>90</b>. 90 + 30 = <b>update 120</b>.',
+   v:()=>stockView({batch:'B2406',mf:'02-May-26',exp:'01-May-28',mv:'in',prev:90,came:30,upd:120,sold:0,rem:120,phase:'in',rows:[['B2406',100,0,100,90,'out'],['B2406',30,90,120,120,'in']],cur:1})},
+ {ch:'Inventory',k:'Stock OUT',t:'4) Aur bika → 70',b:'update 120 − bika 50 = <b>remaining 70</b>.<br>(photo me final 70 → is row me 50 gaye. bika hamesha = update − remaining.)',
+   v:()=>stockView({batch:'B2406',mf:'02-May-26',exp:'01-May-28',mv:'out',prev:90,came:30,upd:120,sold:50,rem:70,phase:'out',rows:[['B2406',100,0,100,90,'out'],['B2406',30,90,120,70,'out']],cur:1,total:70})},
+ {ch:'Inventory',k:'Multiple batch',t:'Multiple batch DB me kaise',b:'Naya batch = <b>nayi row</b> (apna batch_no, dates, warehouse).<br>• <code>previous_stock</code> = pichli row ka remaining (chain).<br>• <code>total_stock</code> = sab batch ka remaining ka sum.<br>• Bechte waqt <b>expiry pehle</b> wala pehle (FIFO).',
+   v:()=>stockView({batch:'B2410 (naya)',mf:'02-May-26',exp:'01-May-28',mv:'in',prev:70,came:40,upd:110,sold:0,rem:110,phase:'in',rows:[['B2406',100,0,100,90,'out'],['B2406',30,90,120,70,'out'],['B2410',40,70,110,110,'in']],cur:2,total:110})},
+
+ {ch:'Production',k:'DB rules',t:'Production hardening — rules',b:'High-level production schema ke 10 niyam. Ye saari tables pe lagte. (Web research + APEX DB best-practices se.)',v:()=>rulesView()},
+ {ch:'Relationships',k:'ER diagram',t:'Pura ER diagram (12 tables)',b:'Saari tables + relations. <span style="color:#fbbf24">Yellow=PK</span>, <span style="color:#7dd3fc">Blue=FK</span>. Warehouse self-link (<code>parent_id</code>) = location hierarchy.',v:()=>erView()},
+ {ch:'Relationships',k:'Done',t:'✅ Product module ready',b:'Masters → Product (production fields) → Crop/Image → Location (franchise tree) → Stock (batch + movement) → rules → ER.<br><br>Final doc bana sakta. Bata to colorful docx generate kar du.',v:()=>erView()},
+];
+
+// ===== engine =====
+let cur=-1,playing=false,timer=null;
+function render(i){const s=S[i];
+  document.getElementById('chapter').textContent=s.ch;
+  document.getElementById('kicker').textContent=s.k;
+  document.getElementById('stepTitle').innerHTML=s.t;
+  document.getElementById('stepBody').innerHTML=s.b;
+  document.getElementById('stage').scrollTop=0;
+  document.getElementById('stage').innerHTML=s.v();
+  document.getElementById('count').textContent=(i+1)+' / '+S.length;
+  document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
+  document.getElementById('back').disabled=i<=0;
+  document.getElementById('next').disabled=i>=S.length-1;
+}
+function go(i){if(i<0||i>=S.length)return;cur=i;render(cur);}
+function next(){if(cur<S.length-1)go(cur+1);else stop();}
+function back(){if(cur>0)go(cur-1);}
+function startp(){playing=true;document.getElementById('play').textContent='⏸ Pause';if(cur>=S.length-1)go(0);
+  const tk=()=>{if(!playing)return;if(cur>=S.length-1){stop();return;}next();timer=setTimeout(tk,3600);};timer=setTimeout(tk,700);}
+function stop(){playing=false;clearTimeout(timer);document.getElementById('play').textContent='▶ Auto';}
+document.getElementById('next').onclick=()=>{stop();next();};
+document.getElementById('back').onclick=()=>{stop();back();};
+document.getElementById('reset').onclick=()=>{stop();go(0);};
+document.getElementById('play').onclick=()=>{playing?stop():startp();};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){stop();next();}if(e.key==='ArrowLeft'){stop();back();}});
+go(0);
+</script>
+</body>
+</html>

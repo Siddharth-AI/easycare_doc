@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apolium — System Overview · Client Review Copy</title>
+<style>
+:root{
+  --paper:#F3EFE2;
+  --paper-2:#EAE2CC;
+  --card:#FCFAF2;
+  --ink:#1E2A38;
+  --ink-soft:#4B5A68;
+  --ink-faint:#8993A0;
+  --rule:#6B5B95;
+  --rule-bg:#EFEBF5;
+  --confirmed:#2F6B4F;
+  --confirmed-bg:#E8F1EA;
+  --assume:#B5701E;
+  --assume-bg:#F7ECDA;
+  --decision:#A93A34;
+  --decision-bg:#F6E6E4;
+  --gold:#B8901F;
+  --line:#D8CFB4;
+  --shadow: 0 8px 24px rgba(30,42,56,.10);
+  --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', system-ui, sans-serif;
+  --mono: 'SF Mono', Consolas, 'Courier New', monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+  font-size:16px; line-height:1.6;
+  background-image:
+    linear-gradient(var(--paper-2) 1px, transparent 1px);
+  background-size: 100% 44px;
+  background-attachment:local;
+}
+::selection{ background: var(--gold); color:#fff; }
+
+/* ---------- layout shell ---------- */
+.shell{ display:flex; min-height:100vh; }
+.nav{
+  width:248px; flex:0 0 248px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  background: var(--ink); color:var(--paper); padding:28px 0 28px 0;
+  border-right: 6px solid var(--gold);
+}
+.nav .brand{ padding:0 22px 20px 22px; border-bottom:1px solid rgba(243,239,226,.15); margin-bottom:14px;}
+.nav .brand .mark{ font-family:var(--serif); font-weight:700; font-size:22px; letter-spacing:.5px;}
+.nav .brand .sub{ font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--gold); margin-top:4px;}
+.nav ol{ list-style:none; margin:0; padding:0; counter-reset:navnum;}
+.nav li{ counter-increment:navnum; }
+.nav a{
+  display:flex; gap:10px; align-items:baseline; text-decoration:none; color:#CFD6DE;
+  padding:9px 22px; font-size:13.5px; border-left:3px solid transparent;
+}
+.nav a::before{ content: counter(navnum,decimal-leading-zero); font-family:var(--mono); font-size:11px; color:var(--gold); }
+.nav a:hover{ color:#fff; background:rgba(255,255,255,.04); }
+.nav a.active{ color:#fff; border-left-color:var(--gold); background:rgba(184,144,31,.14); font-weight:600; }
+.nav .foot{ padding:18px 22px 0 22px; margin-top:16px; border-top:1px solid rgba(243,239,226,.15); font-size:11px; color:#8D97A3; }
+
+.main{ flex:1; min-width:0; }
+section{ padding: 86px 64px; max-width:980px; margin:0 auto; scroll-margin-top: 20px; }
+section + section{ border-top: 1px dashed var(--line); }
+@media (max-width: 900px){
+  .nav{ display:none; }
+  section{ padding: 56px 22px; }
+}
+
+/* ---------- type ---------- */
+.eyebrow{ font-family:var(--mono); font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; display:block;}
+h2{ font-family:var(--serif); font-size:36px; font-weight:700; margin:0 0 6px 0; letter-spacing:-.3px;}
+h3{ font-family:var(--serif); font-size:23px; font-weight:700; margin:34px 0 10px 0; }
+h4{ font-family:var(--serif); font-size:17px; font-weight:700; margin:20px 0 8px 0; }
+p{ color:var(--ink-soft); margin:0 0 14px 0; max-width:70ch;}
+.lede{ font-size:18px; color:var(--ink-soft); max-width:62ch; margin-bottom:34px;}
+strong{ color:var(--ink); }
+a{ color: var(--rule); }
+.num{ font-family:var(--mono); }
+
+/* ---------- stamp / tag callouts ---------- */
+.tag{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px; font-weight:700; letter-spacing:.4px; padding:3px 9px; border-radius:3px; text-transform:uppercase;}
+.tag-rule{ background:var(--rule-bg); color:var(--rule); }
+.tag-confirmed{ background:var(--confirmed-bg); color:var(--confirmed); }
+.tag-assume{ background:var(--assume-bg); color:var(--assume); }
+.tag-decision{ background:var(--decision-bg); color:var(--decision); }
+
+.callout{ border:1px solid var(--line); border-left:5px solid var(--ink); background:var(--card); border-radius:2px; padding:16px 20px; margin:16px 0; box-shadow: var(--shadow);}
+.callout.rule{ border-left-color:var(--rule); }
+.callout.confirmed{ border-left-color:var(--confirmed); }
+.callout.assume{ border-left-color:var(--assume); }
+.callout.decision{ border-left-color:var(--decision); }
+.callout .tag{ margin-bottom:8px; }
+.callout p{ margin:0; }
+.callout p + p{ margin-top:8px; }
+
+/* ---------- cards / grid ---------- */
+.grid{ display:grid; gap:18px; }
+.grid-2{ grid-template-columns:1fr 1fr; }
+.grid-3{ grid-template-columns:repeat(3,1fr); }
+.grid-4{ grid-template-columns:repeat(4,1fr); }
+@media (max-width:760px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:4px; padding:20px; box-shadow:var(--shadow); }
+.card h4{ margin-top:0; }
+.stat{ background:var(--ink); color:var(--paper); border-radius:4px; padding:22px; text-align:center; }
+.stat .n{ font-family:var(--serif); font-size:34px; font-weight:700; color:#fff; }
+.stat .l{ font-family:var(--mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); margin-top:6px;}
+
+/* ---------- table ---------- */
+table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:14.5px; background:var(--card); box-shadow:var(--shadow);}
+th,td{ text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+th{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--ink-faint); border-bottom:2px solid var(--ink);}
+tr:last-child td{ border-bottom:none;}
+td .num, th .num{ font-family:var(--mono); }
+.hl-row td{ background:var(--rule-bg); font-weight:700; }
+
+/* ---------- hero ---------- */
+.hero{ padding-top:64px; }
+.hero .kicker{ font-family:var(--mono); color:var(--gold); letter-spacing:2px; font-size:12.5px; text-transform:uppercase;}
+.hero h1{ font-family:var(--serif); font-size:52px; line-height:1.05; margin:14px 0 18px 0; letter-spacing:-1px;}
+.hero .sub{ font-size:19px; color:var(--ink-soft); max-width:64ch; margin-bottom:30px;}
+.hero .cta-row{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:46px;}
+.btn{ font-family:var(--mono); font-size:13px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; padding:12px 20px; border-radius:3px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px;}
+.btn.ghost{ background:transparent; color:var(--ink); }
+.btn:hover{ opacity:.85; }
+
+/* signature: split-sale animation */
+.split-stage{ background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); padding:30px; position:relative; min-height:260px; }
+.split-svg{ width:100%; height:auto; display:block; }
+.split-svg .flow-path{ fill:none; stroke-width:3; stroke-dasharray: 6 6; }
+.split-svg .p-money{ stroke: var(--gold); }
+.split-svg .p-points{ stroke: var(--rule); }
+.split-svg .dot{ opacity:0; }
+.split-svg .dot.run{ animation: run-dot 1.8s linear forwards; }
+@keyframes run-dot{ 0%{ opacity:1; offset-distance:0%; } 96%{opacity:1;} 100%{ opacity:0; offset-distance:100%; } }
+.split-svg text{ font-family:var(--sans); }
+.split-legend{ display:flex; gap:26px; margin-top:16px; font-size:13px; flex-wrap:wrap;}
+.split-legend span{ display:inline-flex; align-items:center; gap:8px; }
+.swatch{ width:14px; height:14px; border-radius:3px; display:inline-block;}
+
+/* ---------- ladder ---------- */
+.ladder{ display:flex; align-items:flex-end; gap:0; margin:26px 0 10px; overflow-x:auto; }
+.rung{ flex:1; min-width:120px; text-align:center; position:relative; padding:0 6px;}
+.rung .box{ background:var(--card); border:1px solid var(--line); border-top:4px solid var(--ink); border-radius:3px; padding:14px 8px; box-shadow:var(--shadow); }
+.rung .box.dim{ opacity:.4; border-top-color:var(--ink-faint); }
+.rung .name{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-faint);}
+.rung .price{ font-family:var(--serif); font-size:24px; font-weight:700; margin-top:4px;}
+.rung .margin{ font-size:12px; color:var(--confirmed); margin-top:6px; font-weight:700;}
+.rung .arrow{ position:absolute; right:-14px; top:50%; transform:translateY(-50%); color:var(--ink-faint); z-index:2; font-size:18px;}
+
+/* ---------- hierarchy diagram ---------- */
+.hier{ background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); padding:24px 18px; margin:22px 0 6px; text-align:center; }
+.hier-row{ display:flex; justify-content:center; gap:22px; flex-wrap:wrap; }
+.hier-row.two .hbox{ min-width:150px; }
+.hbox{ display:inline-block; border:1px solid var(--line); border-top:4px solid var(--ink-faint); border-radius:3px; padding:11px 20px; font-family:var(--mono); font-size:13px; font-weight:600; background:var(--paper); }
+.hbox em{ font-style:normal; color:var(--ink-faint); font-weight:400; font-size:11.5px; }
+.hbox.wh{ border-top-color:var(--gold); }
+.hbox.mwh{ border-top-color:#8A6D1C; }
+.hbox.l1{ border-top-color:var(--rule); }
+.hbox.l2, .hbox.l3{ border-top-color:var(--confirmed); }
+.hier-arrow{ color:var(--ink-faint); font-size:18px; line-height:1.5; }
+.hier-split{ position:relative; height:30px; width:min(430px,84%); margin:0 auto; }
+.hier-split::before{ content:''; position:absolute; left:50%; top:0; width:1px; height:15px; background:var(--ink-faint); }
+.hier-split::after{ content:''; position:absolute; left:25%; right:25%; top:15px; height:1px; background:var(--ink-faint); }
+.hier-split .hs-l, .hier-split .hs-r{ position:absolute; top:15px; width:1px; height:15px; background:var(--ink-faint); }
+.hier-split .hs-l{ left:25%; }
+.hier-split .hs-r{ right:25%; }
+
+/* ---------- tree svg ---------- */
+.tree-wrap{ background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); padding:20px; }
+.tree-svg .edge{ stroke:var(--line); stroke-width:2; fill:none; }
+.tree-svg .edge.active{ stroke:var(--rule); stroke-width:3.5; }
+.tree-svg .node circle{ fill:var(--card); stroke:var(--ink-faint); stroke-width:2; }
+.tree-svg .node.active circle{ stroke:var(--rule); stroke-width:3; fill:var(--rule-bg); }
+.tree-svg .node.self circle{ stroke: var(--gold); fill:#FBF3DC; }
+.tree-svg .node text.id{ font-family:var(--mono); font-weight:700; font-size:13px; fill:var(--ink); }
+.tree-svg .node text.badge{ font-family:var(--mono); font-size:10.5px; fill:var(--confirmed); font-weight:700; opacity:0; transition:opacity .3s;}
+.tree-svg .node.show-badge text.badge{ opacity:1; }
+.tree-btns{ display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+.chip{ font-family:var(--mono); font-size:12.5px; padding:8px 14px; border:1.5px solid var(--ink); border-radius:20px; background:transparent; cursor:pointer; color:var(--ink); }
+.chip:hover{ background:var(--ink); color:var(--paper); }
+.chip.active{ background:var(--rule); border-color:var(--rule); color:#fff; }
+
+/* ---------- simulator ---------- */
+.sim{ background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); padding:26px; }
+.sim-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px 30px; margin-bottom:10px;}
+@media (max-width:700px){ .sim-grid{ grid-template-columns:1fr; } }
+.field label{ font-family:var(--mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-faint); display:block; margin-bottom:6px;}
+.field input[type=number]{ width:100%; padding:9px 10px; border:1.5px solid var(--line); border-radius:3px; font-family:var(--mono); font-size:15px; background:#fff; color:var(--ink);}
+.field input[type=range]{ width:100%; accent-color:var(--rule); }
+.field .val{ font-family:var(--mono); font-weight:700; color:var(--rule); }
+.sim-results{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:20px;}
+@media (max-width:700px){ .sim-results{ grid-template-columns:1fr 1fr; } }
+.res{ background:var(--paper); border:1px solid var(--line); border-radius:4px; padding:14px; text-align:center;}
+.res .n{ font-family:var(--mono); font-weight:700; font-size:19px; }
+.res .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-faint); margin-top:4px;}
+.res.payout .n{ color:var(--confirmed); }
+.res.wash .n{ color:var(--decision); }
+
+/* ---------- capping level bar ---------- */
+.level-bar{ display:flex; gap:4px; margin:18px 0; }
+.level-seg{ flex:1; height:34px; border-radius:2px; background:var(--paper-2); position:relative; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); border:1px solid var(--line);}
+.level-seg.on{ background:var(--rule); color:#fff; border-color:var(--rule); font-weight:700; }
+
+/* ---------- stepper (sale journey) ---------- */
+.stepper{ background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow); padding:26px; }
+.step-track{ display:flex; gap:4px; margin-bottom:22px; flex-wrap:wrap;}
+.step-dot{ flex:1; min-width:26px; height:8px; border-radius:4px; background:var(--paper-2); cursor:pointer; }
+.step-dot.trading{ background:#E4D9BE; }
+.step-dot.incentive{ background:#DCD5EA; }
+.step-dot.active{ background:var(--ink); }
+.step-body{ min-height:150px; }
+.step-body .kicker{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:1px;}
+.step-body .kicker.trading{ color:var(--gold); }
+.step-body .kicker.incentive{ color:var(--rule); }
+.step-body h4{ font-size:22px; margin:6px 0 10px 0; }
+.step-nav{ display:flex; justify-content:space-between; margin-top:20px; }
+
+/* ---------- portals ---------- */
+.portal-card{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:22px; box-shadow:var(--shadow); position:relative;}
+.portal-card .badge{ position:absolute; top:18px; right:18px; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.5px; padding:3px 8px; border-radius:10px;}
+.badge.public{ background:var(--confirmed-bg); color:var(--confirmed);}
+.badge.private{ background:var(--decision-bg); color:var(--decision);}
+
+/* ---------- demo cards ---------- */
+.demo-card{ display:block; text-decoration:none; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:22px; box-shadow:var(--shadow); transition:transform .15s ease; color:var(--ink);}
+.demo-card:hover{ transform:translateY(-3px); border-color:var(--rule); }
+.demo-card .tag{ margin-bottom:10px;}
+.demo-card .go{ font-family:var(--mono); font-size:12px; color:var(--rule); margin-top:12px; display:inline-block;}
+
+/* ---------- confirm ledger ---------- */
+.qrow{ display:grid; grid-template-columns:34px 1fr 210px; gap:16px; padding:16px 0; border-bottom:1px solid var(--line); align-items:start;}
+.qrow:last-child{ border-bottom:none;}
+.qrow .qn{ font-family:var(--serif); font-weight:700; font-size:20px; color:var(--ink-faint);}
+.qrow .qtext{ font-weight:600; margin-bottom:4px;}
+.qrow .qassume{ font-size:13px; color:var(--ink-faint);}
+.answer{ font-size:13px; padding:10px 12px; border-radius:4px; }
+.answer.ok{ background:var(--confirmed-bg); color:var(--confirmed); }
+.answer.pending{ background:var(--assume-bg); color:var(--assume); }
+@media (max-width:700px){ .qrow{ grid-template-columns:1fr; } }
+
+/* ---------- phases ---------- */
+.phase-row{ display:grid; grid-template-columns:56px 1fr; gap:18px; padding:18px 0; border-bottom:1px dashed var(--line);}
+.phase-row:last-child{ border-bottom:none; }
+.phase-n{ font-family:var(--serif); font-size:30px; font-weight:700; color:var(--gold);}
+.phase-row.wide{ background:var(--rule-bg); border-radius:4px; padding:18px; margin:6px 0; border-bottom:none;}
+
+/* signoff */
+.signbox{ border:1px solid var(--ink); border-radius:4px; padding:24px; background:var(--card);}
+.sign-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:14px;}
+.sign-col{ padding:14px 20px; }
+.sign-col + .sign-col{ border-left:1px solid var(--line); }
+.sign-line{ border-bottom:1px solid var(--ink-faint); height:34px; margin-top:16px;}
+.sign-label{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-faint); margin-top:20px;}
+
+footer{ text-align:center; padding:40px 20px 70px; color:var(--ink-faint); font-size:12.5px; font-family:var(--mono);}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="nav">
+    <div class="brand">
+      <div class="mark">Apolium</div>
+      <div class="sub">System Overview · v1.1</div>
+    </div>
+    <ol id="navlist">
+      <li><a href="#hero" data-t="Shuruaat">Shuruaat</a></li>
+      <li><a href="#legend" data-t="Kaise Padhein">Kaise Padhein</a></li>
+      <li><a href="#overview" data-t="Ek Nazar Me">Ek Nazar Me</a></li>
+      <li><a href="#network" data-t="Franchise · Product · Billing">Franchise · Product · Billing</a></li>
+      <li><a href="#tree" data-t="Member Network">Member Network</a></li>
+      <li><a href="#points" data-t="Points & Incentive">Points &amp; Incentive</a></li>
+      <li><a href="#journey" data-t="Ek Sale ka Safar">Ek Sale ka Safar</a></li>
+      <li><a href="#deliverables" data-t="Aapko Kya Milega">Aapko Kya Milega</a></li>
+      <li><a href="#demo" data-t="Live Demo">Live Demo</a></li>
+      <li><a href="#confirm" data-t="Confirm Ho Chuka">Confirm Ho Chuka</a></li>
+      <li><a href="#phases" data-t="Kaise Banega">Kaise Banega</a></li>
+      <li><a href="#signoff" data-t="Sign-off">Sign-off</a></li>
+    </ol>
+    <div class="foot">Client review copy · sirf business rules.<br>Technical doc alag se hai.</div>
+  </nav>
+
+  <main class="main">
+
+    <!-- HERO -->
+    <section id="hero" class="hero">
+      <span class="kicker">Apolium Distribution &amp; Incentive Platform</span>
+      <h1>Ek sale, do raaste.<br>Poora system ek nazar me.</h1>
+      <p class="sub">Ye document technical nahi hai — koi software knowledge nahi chahiye. Har module, har rule, har number yahin hai taaki aap padh kar bata sakein: <strong>kahan hum sahi samjhe, kahan galat.</strong></p>
+      <div class="cta-row">
+        <button class="btn" onclick="runSplit()">▶ Ek Sale Chalao</button>
+        <a class="btn ghost" href="#overview">System dekhiye ↓</a>
+      </div>
+
+      <div class="split-stage">
+        <svg class="split-svg" viewBox="0 0 900 240" id="splitSvg">
+          <!-- start node -->
+          <circle cx="90" cy="120" r="34" fill="#FCFAF2" stroke="#1E2A38" stroke-width="2.5"/>
+          <text x="90" y="116" text-anchor="middle" font-size="11" fill="#4B5A68" font-family="SF Mono, Consolas, monospace">MEMBER</text>
+          <text x="90" y="130" text-anchor="middle" font-size="11" fill="#4B5A68" font-family="SF Mono, Consolas, monospace">KHAREEDTA HAI</text>
+
+          <path class="flow-path p-money" id="pathMoney" d="M124,110 C 300,60 480,60 780,72"/>
+          <path class="flow-path p-points" id="pathPoints" d="M124,130 C 300,180 480,180 780,168"/>
+
+          <circle cx="800" cy="70" r="46" fill="#FCFAF2" stroke="#B8901F" stroke-width="2.5"/>
+          <text x="800" y="60" text-anchor="middle" font-size="11" fill="#1E2A38" font-weight="bold" font-family="Georgia, serif">FRANCHISE</text>
+          <text x="800" y="74" text-anchor="middle" font-size="10" fill="#4B5A68" font-family="SF Mono, monospace">stock ↓</text>
+          <text x="800" y="87" text-anchor="middle" font-size="10" fill="#4B5A68" font-family="SF Mono, monospace">paisa</text>
+
+          <circle cx="800" cy="170" r="46" fill="#FCFAF2" stroke="#6B5B95" stroke-width="2.5"/>
+          <text x="800" y="160" text-anchor="middle" font-size="11" fill="#1E2A38" font-weight="bold" font-family="Georgia, serif">MEMBER NETWORK</text>
+          <text x="800" y="174" text-anchor="middle" font-size="10" fill="#4B5A68" font-family="SF Mono, monospace">points ↑</text>
+          <text x="800" y="187" text-anchor="middle" font-size="10" fill="#4B5A68" font-family="SF Mono, monospace">incentive</text>
+
+          <circle class="dot" id="dotMoney" r="6" fill="#B8901F" style="offset-path:path('M124,110 C 300,60 480,60 780,72');"/>
+          <circle class="dot" id="dotPoints" r="6" fill="#6B5B95" style="offset-path:path('M124,130 C 300,180 480,180 780,168');"/>
+        </svg>
+        <div class="split-legend">
+          <span><span class="swatch" style="background:#B8901F"></span> Stock &amp; paisa → franchise network (trading business)</span>
+          <span><span class="swatch" style="background:#6B5B95"></span> Points → member network (incentive business)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEGEND -->
+    <section id="legend">
+      <span class="eyebrow">01 · Ye Document Kaise Padhein</span>
+      <h2>Chaar rang, chaar matlab</h2>
+      <p class="lede">Poore document me har rule ek rang me hai. Yehi rang is page pe bhi use huye hain — jahan bhi ye stamp dikhe, uska matlab neeche fix hai.</p>
+      <div class="grid grid-4">
+        <div class="callout rule"><span class="tag tag-rule">🟪 Rule</span><p>Humne samjha aur design me daal diya. Padhiye, confirm kijiye.</p></div>
+        <div class="callout confirmed"><span class="tag tag-confirmed">🟩 Confirmed</span><p>Aap pehle hi approve kar chuke hain. Kuch nahi karna.</p></div>
+        <div class="callout assume"><span class="tag tag-assume">🟧 Assumption</span><p>Humne maan liya kyunki clear nahi tha. Zaroori — confirm ya correct kijiye.</p></div>
+        <div class="callout decision"><span class="tag tag-decision">🟥 Decision</span><p>Sirf aap decide kar sakte hain. Decide karke bataiye.</p></div>
+      </div>
+      <div class="callout" style="margin-top:26px;">
+        <p><strong>Ye kyun zaroori hai:</strong> galat rule <em>abhi</em> pakda jaaye to ek baat-cheet me theek ho jaata hai. Wahi rule development ke baad pakda jaaye to hafton ka rework, dobara testing, aur members ki earning dobara calculate karni pad sakti hai. Section 5 (Points &amp; Incentive) ke numbers sabse zyada dhyan se dekhiye.</p>
+      </div>
+    </section>
+
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <span class="eyebrow">02 · System Ek Nazar Me</span>
+      <h2>Do structure, saath-saath chalte hain</h2>
+      <p class="lede">Inko alag samajhna sabse zaroori hai — baaki poora system isi farq pe khada hai.</p>
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color:var(--gold)">Franchise Network</h4>
+          <p><strong>Kya hai:</strong> aapki physical supply chain — warehouse, mini-warehouse, franchise shops.</p>
+          <p><strong>Shape:</strong> WH → MWH (optional) → L1. L2 aur L3 dono <strong>seedha L1 ke neeche</strong> — aapas me bhai-bhai, ek doosre ke neeche nahi.</p>
+          <p><strong>Kaam:</strong> stock bhejna, paisa manage karna, credit aur stock limit.</p>
+          <p><strong>Kamai:</strong> product margin (price ladder) + commission.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--rule)">Member Network</h4>
+          <p><strong>Kya hai:</strong> aapki selling community — members (BPA) jo kharidte aur refer karte hain.</p>
+          <p><strong>Shape:</strong> binary tree — har member ke Left aur Right, do leg.</p>
+          <p><strong>Kaam:</strong> kisne kisko laaya, aur incentive calculate karna.</p>
+          <p><strong>Kamai:</strong> points (PV) se incentive.</p>
+        </div>
+      </div>
+
+      <h3>Paanch module</h3>
+      <div class="grid grid-3">
+        <div class="card"><div class="eyebrow">Module 1</div><h4>Franchise &amp; Distribution</h4><p>WH → MWH → L1 → (L2 · L3) network, pincode area, buying limit.</p></div>
+        <div class="card"><div class="eyebrow">Module 2</div><h4>Products &amp; Pricing</h4><p>Catalogue, har level ka alag price, GST, aur har product ke points (PV/GV).</p></div>
+        <div class="card"><div class="eyebrow">Module 3</div><h4>Billing, Wallet &amp; Stock</h4><p>Fund request, stock request, billing, aur commission.</p></div>
+        <div class="card"><div class="eyebrow">Module 4</div><h4>Member Network</h4><p>Binary tree — sponsor, placement, naya member kahan lagega.</p></div>
+        <div class="card"><div class="eyebrow">Module 5</div><h4>Points &amp; Incentives</h4><p>Poora earning plan — Self/Direct/Team point, BPI matching, capping, Startup, Mentor's, Achievers.</p></div>
+        <div class="card" style="background:var(--ink); color:var(--paper); border:none;"><div class="eyebrow" style="color:var(--gold)">Design Goal</div><h4 style="color:#fff">Kabhi mix nahi hote</h4><p style="color:#CFD6DE;">Stock/paisa aur points hamesha alag chalte hain, ek hi bill se.</p></div>
+      </div>
+
+      <h3>Scale — kitne log sambhalega</h3>
+      <div class="grid grid-3">
+        <div class="stat"><div class="n">5,00,000+</div><div class="l">Members</div></div>
+        <div class="stat"><div class="n">Roz</div><div class="l">Auto Calculation</div></div>
+        <div class="stat"><div class="n">100%</div><div class="l">History / Audit</div></div>
+      </div>
+      <p style="margin-top:16px;">Hum 1 lakh se 5 lakh members aur usse aage ke liye design kar rahe hain — chhote pilot ke liye nahi. Matlab: kuch bhi haath se calculate nahi hoga, sab roz apne aap chalega, aur har rupee aur har point ka hisaab us exact sale tak trace ho sakega jisse wo bana.</p>
+    </section>
+
+    <!-- NETWORK / FRANCHISE / BILLING -->
+    <section id="network">
+      <span class="eyebrow">03 · Module 1–3 · Franchise, Product, Billing</span>
+      <h2>Ek product, WH se member tak</h2>
+
+      <h3>3.1 Network aur service area</h3>
+      <div class="callout rule">
+        <span class="tag tag-rule">🟪 Rule — Network (badla hua)</span>
+        <p>Upar ek Warehouse (WH) — saara stock wahin se. Mini-Warehouse optional — kahin hoga, kahin nahi, ek se zyada bhi ho sakte. Uske neeche <strong>Level 1</strong>, aur <strong>L1 ke neeche seedha Level 2 aur Level 3 dono</strong>.</p>
+        <p><strong>Ye pehle se badla hai:</strong> pehle chain seedhi thi — L1 → L2 → L3 (L3, L2 ke neeche). Ab <strong>L2 aur L3 dono L1 ke direct neeche hain</strong> — aapas me bhai-bhai, ek doosre ke neeche nahi.</p>
+      </div>
+      <div class="hier">
+        <div class="hier-row"><span class="hbox wh">WH · Warehouse</span></div>
+        <div class="hier-arrow">↓</div>
+        <div class="hier-row"><span class="hbox mwh">MWH · Mini-Warehouse <em>(optional)</em></span></div>
+        <div class="hier-arrow">↓</div>
+        <div class="hier-row"><span class="hbox l1">L1 · Level 1</span></div>
+        <div class="hier-split"><span class="hs-l"></span><span class="hs-r"></span></div>
+        <div class="hier-row two"><span class="hbox l2">L2 · Level 2</span><span class="hbox l3">L3 · Level 3</span></div>
+      </div>
+      <p style="margin-top:14px;">MWH optional hai — na ho to WH seedha L1 ko supply karta hai. Levels sparse bhi ho sakti hain: zaroori nahi har L1 ke neeche L2 aur L3 dono maujood hon.</p>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Stock lene ka flow same</span>
+        <p>Maal uthane ka tareeka pehle jaisa hi hai — WH, MWH, L1, L2, L3 sab apne upar wale se stock le sakte hain. Structure badla hai, stock ka flow nahi.</p>
+      </div>
+      <table>
+        <tr><th>Kahan se kharide</th><th>Limit</th></tr>
+        <tr><td>Apni home shop se (jo uska pincode serve karti hai)</td><td class="num">Unlimited</td></tr>
+        <tr><td>Kisi doosri shop se</td><td class="num">₹2,000 per month (paise pe, quantity pe nahi)</td></tr>
+        <tr><td>Admin special limit de de</td><td>Us mahine ka total cap (₹10,000 = ₹2,000 normal + ₹8,000 extra), sirf ek mahine</td></tr>
+      </table>
+      <p>Member khud limit nahi badha sakta — request bhejta hai, Admin approve/reject karta hai. Har mahine limit wapas ₹2,000 ho jaati hai.</p>
+
+      <h3>3.2 Product catalogue</h3>
+      <div class="callout rule">
+        <span class="tag tag-rule">🟪 Rule — Nested Categories</span>
+        <p>Categories 4 level tak nested ho sakti hain (Category → Sub → Sub-sub → Sub-sub-sub). <strong>Product kisi bhi level pe lag sakta hai</strong> — zaroori nahi sabse neeche waali category me ho. Har category ka apna <strong>prefix</strong> hota hai jo product code me apne aap lagta hai.</p>
+      </div>
+      <table>
+        <tr><th>Field</th><th>Example</th><th>Note</th></tr>
+        <tr><td>Unique ID</td><td class="num">123</td><td>System generate karta hai</td></tr>
+        <tr><td>Name</td><td>Rakshak</td><td>Product ka naam</td></tr>
+        <tr><td>Category + prefix</td><td class="num">Ag-Rakshak123</td><td>Auto-generated code (category prefix + name + ID)</td></tr>
+        <tr><td>QR / Barcode</td><td>—</td><td>Scan ke liye, dono</td></tr>
+        <tr><td>Packaging / Unit</td><td>Box / Bottle / Bag · ml / kg / pc</td><td></td></tr>
+        <tr><td>MRP</td><td class="num">₹1,000</td><td>Printed price</td></tr>
+        <tr><td>Sell Price (MSP)</td><td class="num">₹800</td><td>Member ko isi price me milta hai</td></tr>
+        <tr><td>Crop (fasal)</td><td>Multiple</td><td>Ek product multiple crops ke liye ho sakta</td></tr>
+        <tr><td>Points</td><td class="num">PV 20 · UV 10 · NV —</td><td>Reward fields — poora logic Module 5 me</td></tr>
+      </table>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — GST</span>
+        <p>Har product pe apna GST % set hota hai (example: 10%), aur split hamesha <strong>CGST 5% + SGST 5%</strong> — automatic bill pe.</p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Billing ke waqt Cost Price customize</span>
+        <p>Inventory se bill banate waqt <strong>cost price change ki ja sakti hai</strong>. Bill <strong>usi customize ki hui cost pe</strong> banega — product master ka default cost sirf shuruaati value hai, patthar ki lakeer nahi. Har bill me kaunsi cost use hui, wo record me save rehti hai.</p>
+      </div>
+
+      <h3>3.3 Price ladder — har level ka alag price</h3>
+      <p>Product ki price sirf ek hi nahi hoti — har franchise level ka apna price hota hai (neeche dekhiye), aur yehi ladder commission ka base hai.</p>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Price aur Commission FIX nahi, Product ke saath aate hain</span>
+        <p>Ye ladder poore system ke liye hardcode nahi hai. <strong>Har product ke apne level-price hote hain</strong> — Admin product master me MWH / L1 / L2 / L3 ka rate aur selling price set karta hai, aur commission usi product ke rate se nikalta hai. Neeche ke numbers <strong>sirf ek example</strong> hain — ek doosre product ke bilkul alag ho sakte hain.</p>
+      </div>
+
+      <div class="ladder" id="ladder">
+        <div class="rung"><div class="box" data-level="wh"><div class="name">WH</div><div class="price">₹700</div></div><div class="arrow">▶</div></div>
+        <div class="rung"><div class="box" data-level="l1"><div class="name">L1</div><div class="price">₹725</div><div class="margin">+₹25</div></div><div class="arrow">▶</div></div>
+        <div class="rung"><div class="box" data-level="leaf" id="ladderLeaf"><div class="name">L2</div><div class="price">₹750</div><div class="margin">+₹25</div></div><div class="arrow">▶</div></div>
+        <div class="rung"><div class="box" data-level="member"><div class="name">Member</div><div class="price">₹800</div><div class="margin">+₹50</div></div></div>
+      </div>
+      <div class="tree-btns">
+        <button class="chip active" onclick="ladderScenario('l2', this)">Customer ne L2 se liya</button>
+        <button class="chip" onclick="ladderScenario('l3', this)">Customer ne L3 se liya</button>
+        <button class="chip" onclick="ladderScenario('l1', this)">Customer ne seedha L1 se liya</button>
+      </div>
+      <div class="callout rule" id="ladderNote">
+        <span class="tag tag-rule">🟪 Rule — L2 aur L3 alag-alag raste hain</span>
+        <p>Ab L2 aur L3 dono L1 ke neeche hain, isliye ek hi chain me teeno kabhi nahi aate. Customer jis shop se khareedta hai, chain wahin khatam ho jaati hai — L2 wala raasta ya L3 wala raasta.</p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Commission kaise bantega</span>
+        <p><strong>L2 aur L3 ke beech ab koi rishta nahi hai.</strong> Baaki flow bilkul pehle jaisa hi chalega — har level ko <strong>apna set commission</strong> milta hai.</p>
+        <p>Sale L2 se hui → <strong>L1 aur L2</strong> ko apna-apna commission. Sale L3 se hui → <strong>L1 aur L3</strong> ko apna-apna. Ek raaste ka level doosre raaste me aata hi nahi, isliye aapas me kuch bantta bhi nahi.</p>
+        <p>Aur commission ka number <strong>product master se</strong> aata hai — Admin har product pe har level ka rate set karta hai. System me koi fix ladder hardcode nahi hai.</p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — "Missing level ka roll-up" rule KHATAM</span>
+        <p>Purana rule tha: koi level chain me na ho to uska commission upar wale ko mil jaata tha. <strong>Ab ye rule poori tarah khatam hai.</strong> L2 aur L3 alag branch hain — L2 ka na hona L3 ko affect hi nahi karta, aur ulta bhi. Beech me koi "gap" ban hi nahi sakta.</p>
+      </div>
+
+      <h3>3.4 Billing, wallet aur stock — L1 aur L2/L3 ka flow ALAG hai</h3>
+      <div class="callout decision">
+        <span class="tag tag-decision">🟥 Rule — Do Alag Model, Kabhi Mix Nahi</span>
+        <p><strong>L1 = POSTPAID</strong> (pehle maal, baad me paisa) aur <strong>L2 / L3 = PREPAID</strong> (pehle paisa, baad me maal). Ye do bilkul alag flow hain — inka billing, wallet aur limit ka behaviour ek jaisa nahi hai, aur inhe kabhi mila kar nahi chalaya jaayega.</p>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color:var(--rule)">L1 — Postpaid (credit limit)</h4>
+          <p>L1 ko ek <strong>fix limit</strong> milti hai (example: ₹15,00,000). Us limit tak wo <strong>bina paisa diye maal utha sakta hai</strong> — pehle stock, payment baad me.</p>
+          <p>Limit khatam hone pe aage maal nahi milega jab tak payment na ho jaaye.</p>
+          <p><strong>Limit har franchise ki apni hoti hai</strong> — Admin har L1 ke liye alag set karta hai. L1 kabhi real money pehle nahi deta; uska wallet minus aur plus hota rehta hai.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--confirmed)">L2 / L3 — Prepaid (wallet recharge)</h4>
+          <p>L2 aur L3 ko <strong>pehle wallet me paisa daalna</strong> padta hai (recharge). Usi paise se maal milta hai — udhaar nahi.</p>
+          <p>Billing ka paisa unke <strong>wallet me jama</strong> hota hai — aur wahi unki <strong>den-dari</strong> hai (jo upar dena hai). Commission usi me <strong>adjust</strong> ho jaata hai.</p>
+        </div>
+      </div>
+
+      <h4 style="margin-top:26px;">L2 / L3 ka example — ₹2 lakh recharge</h4>
+      <table>
+        <tr><th>Step</th><th>Wallet</th><th>Stock</th><th>Commission</th><th>Kya hua</th></tr>
+        <tr><td>Wallet recharge ₹2,00,000</td><td class="num">₹2,00,000</td><td class="num">₹0</td><td class="num">₹0</td><td>Pehle paisa daala</td></tr>
+        <tr><td>Stock request — maal uthaya</td><td class="num">₹0</td><td class="num">₹2,00,000</td><td class="num">₹0</td><td>Paisa maal me convert</td></tr>
+        <tr class="hl-row"><td>₹1,00,000 ka maal becha</td><td class="num">₹1,00,000</td><td class="num">₹1,00,000</td><td class="num">₹50,000</td><td>Billing ka paisa wallet me — ye den-dari hai. Saath me commission bana.</td></tr>
+      </table>
+      <div class="callout rule">
+        <span class="tag tag-rule">🟪 Rule — Paisa Kaise Upar Jaata Hai</span>
+        <p>Jab L2/L3 ko MWH ya WH ko paisa dena hota hai, wo <strong>wallet-to-wallet transfer</strong> se jaata hai. Commission wallet ka paisa bhi isi me adjust ho jaata hai — cash haath se nahi chalta.</p>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:20px;">
+        <div class="card">
+          <h4>Margin split</h4>
+          <p>Mini-WH → L1/L2/L3/customer = <strong>50/50</strong>. L1 → customer = <strong>50/50</strong>. L1 → L2 ya L1 → L3 (chain me neeche) = price ladder se, 50/50 nahi.</p>
+        </div>
+        <div class="card">
+          <h4>Commission rule</h4>
+          <p>L2/L3 ka commission <strong>stock approve hote hi</strong> ban jaata hai. Paisa hamesha Warehouse ke saath settle hota — franchise aapas me cash nahi dete, wallet-to-wallet hota hai.</p>
+        </div>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — L1 kabhi real money nahi deta</span>
+        <p><strong>L1 postpaid hai — wo pehle se paisa deta hi nahi.</strong> Uske paas ek limit hoti hai, aur uska wallet <strong>minus aur plus hota rehta hai</strong> — bilkul jaise pehle chal raha tha. Koi naya behaviour nahi.</p>
+        <p>Sirf L2/L3 ke liye naya hai: wahan pehle <strong>recharge</strong> karna padta hai, aur billing ka paisa wallet me jama hota hai (den-dari).</p>
+      </div>
+
+      <h4>Har franchise ke chaar balance</h4>
+      <table>
+        <tr><th>Balance</th><th>Kya hai</th><th>Kis pe lagta hai</th><th>Use kar sakte?</th></tr>
+        <tr><td>Inventory limit</td><td>Bina paisa diye kitna maal utha sakte (credit limit)</td><td><strong>Sirf L1</strong> (postpaid)</td><td>Admin set karta hai</td></tr>
+        <tr><td>Main wallet</td><td>L2/L3 me: recharge se plus, maal uthane pe minus, billing se wapas plus (den-dari)</td><td><strong>L2 · L3</strong> (prepaid)</td><td class="num" style="color:var(--confirmed)">Haan</td></tr>
+        <tr><td>Commission wallet</td><td>Margin ka apna hissa (50%)</td><td>Sab levels</td><td class="num" style="color:var(--confirmed)">Haan — Main wallet me adjust/transfer</td></tr>
+        <tr><td>Retail profit wallet</td><td>Standard price se upar becha to extra profit</td><td>Sab levels</td><td class="num" style="color:var(--decision)">Sirf dikhta — use nahi kar sakte</td></tr>
+      </table>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Bill cancel ya stock return</span>
+        <p><strong>Poora flow reverse ho jaata hai.</strong> Jo stock gaya tha wo wapas, jo commission bana tha wo wapas — sab kuch ulta chal jaata hai. Wallet, stock aur commission teeno apne aap pehle wali position pe aa jaate hain, aur reverse ka bhi record rehta hai.</p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Payout</span>
+        <p>Payout <strong>mahine me ek baar</strong> hota hai. <strong>TDS 2%</strong> katega.</p>
+      </div>
+    </section>
+
+    <!-- MEMBER TREE -->
+    <section id="tree">
+      <span class="eyebrow">04 · Module 4 · Member Network (Binary Tree)</span>
+      <h2>Har member ke do leg</h2>
+      <p class="lede">Left (Team 1) aur Right (Team 2). Tree infinite neeche ja sakta hai.</p>
+
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Sponsor vs Placement</span>
+        <p>Ye dono <strong>alag</strong> cheezein hain, lekin poori tarah unrelated nahi. Jisne aapko laaya (sponsor), zaroori nahi wahi aapke <strong>theek upar</strong> ho (seedha parent) — par wo hamesha aapke <strong>kisi na kisi upar wale (upline)</strong> me hoga hi. Kyun? Kyunki naya member <strong>hamesha sponsor ke apne hi neeche</strong> chain-drill hokar lagta hai (Left ya Right) — kisi aur ki branch me kabhi nahi ja sakta.</p>
+        <p>Isliye: <strong>sponsor seedha parent na ho, ye ho sakta hai — par sponsor kabhi bhi "bahar ka" ya "bhai/cousin branch ka" nahi ho sakta.</strong> Wo hamesha aapki hi seedhi upar ki line me milega, chahe kitna bhi upar ho.</p>
+      </div>
+      <table>
+        <tr><th></th><th>Sponsor ID</th><th>Placement (Union) ID</th></tr>
+        <tr><td>Batati hai</td><td>Kisne laaya?</td><td>Tree me kahan baithega?</td></tr>
+        <tr><td>Use hoti</td><td>Direct point, Mentor's Incentive</td><td>Team point, BPI matching</td></tr>
+        <tr><td>Seedha parent hi hoga?</td><td colspan="2">Zaroori nahi — par hamesha <strong>upline me hi</strong> hoga (chain-drill sponsor se hi shuru hoti hai)</td></tr>
+      </table>
+
+      <h3>Chain rule — naya member kahan lagega</h3>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Rule — Left ka Left, Right ka Right</span>
+        <p>Sponsor se seedhi chain drill hoti hai — <strong>Left chuna to left → left → left…</strong> jab tak khaali slot na mile; <strong>Right chuna to right → right → right…</strong>. Chain <strong>na beech me rukti hai, na side badalti hai</strong>. Naya member hamesha sponsor ki <strong>neeche wali chain</strong> me lagta hai — idhar-udhar kisi aur branch me kabhi nahi.</p>
+      </div>
+      <p>Neeche buttons dabaiye — dekhiye ki right waali chain kabhi left me nahi mudti, aur left waali kabhi right me nahi.</p>
+
+      <div class="tree-wrap">
+        <div class="tree-btns">
+          <button class="chip active" onclick="chainDemo('u1l', this)">U1 se Left</button>
+          <button class="chip" onclick="chainDemo('u1r', this)">U1 se Right</button>
+          <button class="chip" onclick="chainDemo('u2r', this)">U2 se Right</button>
+        </div>
+        <svg class="tree-svg" viewBox="0 0 640 285" id="chainTree">
+          <g id="chainEdges"></g>
+          <g id="chainNodes"></g>
+        </svg>
+        <p id="chainCaption" style="margin-top:10px; font-family:var(--mono); font-size:13px; color:var(--rule);"></p>
+      </div>
+
+      <h3 style="margin-top:50px;">Point flow — ek purchase se kya hota hai</h3>
+      <p>Member <strong>U8</strong> ne 1,000 PV ka product khareeda. U8 ko <strong>U1 ne sponsor</strong> kiya tha, par U8 tree me <strong>U6 ke left</strong> me baitha hai.</p>
+      <div class="tree-wrap">
+        <div class="tree-btns">
+          <button class="chip" onclick="simulatePurchase()">▶ Purchase Simulate Kijiye</button>
+          <button class="chip" onclick="resetPurchase()">Reset</button>
+        </div>
+        <svg class="tree-svg" viewBox="0 0 640 300" id="pointTree">
+          <g id="pointEdges"></g>
+          <g id="pointNodes"></g>
+        </svg>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed Rules</span>
+        <p>Buyer ko sirf <strong>Self point</strong> milta hai — team point nahi. Sponsor ko <strong>Direct AUR Team</strong> point dono milte hain (agar wo upar bhi hai to). Team point Left ya Right bucket me jaata hai — depend karta hai buyer ki branch us upar-wale ki kaunsi side se neeche hai.</p>
+      </div>
+    </section>
+
+    <!-- POINTS & INCENTIVE -->
+    <section id="points">
+      <span class="eyebrow">05 · Module 5 · Points &amp; Incentive Plan</span>
+      <h2>Business ka dil — har number dhyan se dekhiye</h2>
+
+      <div class="callout rule">
+        <span class="tag tag-rule">🟪 Rule — ID ke Bina Bill Nahi</span>
+        <p>Koi bhi bill banane se pehle member ki unique ID daalni zaroori hai. Bill ke har product ka PV (aur GV/CV) us member ko apne aap mil jaata hai.</p>
+      </div>
+
+      <h3>5.1 Chaar tarah ke point</h3>
+      <table>
+        <tr><th>Point</th><th>Kisko milta</th><th>Kahan use hota</th></tr>
+        <tr><td><strong>1 · Self point</strong></td><td>Sirf buyer ko</td><td>Paisa nahi — sirf uska daily capping level decide karta hai</td></tr>
+        <tr><td><strong>2 · Direct point</strong></td><td>Buyer ke sponsor ko (ek hop)</td><td class="num" style="color:var(--confirmed)">Startup Incentive me</td></tr>
+        <tr><td><strong>3 · Direct Team point</strong></td><td>Sponsor ki poori direct team ka business</td><td class="num" style="color:var(--confirmed)">Achievers qualification me</td></tr>
+        <tr><td><strong>4 · Team point</strong></td><td>Tree me upar ke har member ko — Left team ya Right team bucket me</td><td class="num" style="color:var(--confirmed)">BPI matching me</td></tr>
+      </table>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Direct Team alag point hai</span>
+        <p>Pehle document me teen point the. Ab <strong>Direct Team</strong> alag se chautha point hai — ye Achievers ki qualification me lagta hai, BPI matching me nahi. Team point Left/Right me bantta hai, Direct Team nahi.</p>
+      </div>
+
+      <h3>5.2 BPI — roz ki main kamai</h3>
+      <div class="callout rule">
+        <span class="tag tag-rule">🟪 Rule — Matching</span>
+        <p>Roz Left team PV aur Right team PV compare hote hain. Dono me se chhota = matched, 1,000 ke multiple me neeche round. Member ko matched PV ka <strong>80%</strong> milta hai. Matching aapke capping level tak hi hogi.</p>
+      </div>
+
+      <h4>Aapka daily capping level</h4>
+      <div class="field" style="max-width:420px;">
+        <label>Is mahine Self PV — <span class="val" id="selfPvVal">1,000</span></label>
+        <input type="range" min="0" max="5000" step="50" value="1000" id="selfPvSlider" oninput="onSelfPvChange()">
+      </div>
+      <div class="level-bar" id="levelBar"></div>
+      <p id="levelDesc" style="font-family:var(--mono); font-size:13.5px;"></p>
+
+      <h4 style="margin-top:36px;">BPI simulator — apne numbers daaliye</h4>
+      <div class="sim">
+        <div class="sim-grid">
+          <div class="field"><label>Old Carry — Left</label><input type="number" id="oldLeft" value="159400" oninput="calcBPI()"></div>
+          <div class="field"><label>Old Carry — Right</label><input type="number" id="oldRight" value="2047" oninput="calcBPI()"></div>
+          <div class="field"><label>Aaj ka Naya Business — Left</label><input type="number" id="newLeft" value="0" oninput="calcBPI()"></div>
+          <div class="field"><label>Aaj ka Naya Business — Right</label><input type="number" id="newRight" value="0" oninput="calcBPI()"></div>
+        </div>
+        <div class="sim-results">
+          <div class="res"><div class="n" id="rMatched">—</div><div class="l">Matched PV</div></div>
+          <div class="res payout"><div class="n" id="rPayout">—</div><div class="l">Payout (80%)</div></div>
+          <div class="res"><div class="n" id="rCarryLeft">—</div><div class="l">Carry Forward — Left</div></div>
+          <div class="res"><div class="n" id="rCarryRight">—</div><div class="l">Carry Forward — Right</div></div>
+        </div>
+        <p id="washNote" style="margin-top:14px; font-family:var(--mono); font-size:13px;"></p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Carry Forward aur Washout ka poora rule</span>
+        <p><strong>1 · Matching pehle AAJ ka business kharch karti hai</strong>, uske baad purana carry. Ye order sabse zaroori hai — isi se pura hisaab badal jaata hai.</p>
+        <p><strong>2 · Purana carry jo bacha → hamesha aage jaata hai.</strong> Old carry kabhi wash nahi hota.</p>
+        <p><strong>3 · Aaj ke business ka jo bacha → wahi wash hota hai.</strong></p>
+        <p><strong>4 · Strong side / Weak side — TOTAL se decide hota hai:</strong> dono side ka total (purana carry + aaj ka business) jodo — jiska <strong>total bada wo STRONG</strong>, jiska <strong>total chhota wo WEAK</strong>. Sirf aaj ke business se ya sirf carry se nahi — <strong>dono jod kar</strong>.</p>
+        <p><strong>5 · Weak side pe washout nahi hua → strong side pe bhi nahi hoga.</strong> Uska bacha hua bhi carry forward ho jaayega.</p>
+        <p><strong>6 · Matching bani hi nahi</strong> (1,000 se kam ya cap 0) → kuch wash nahi, dono side ka pura PV aage.</p>
+      </div>
+
+      <h4 style="margin-top:30px;">Chaar example — khud simulator me daal ke check kijiye</h4>
+      <table>
+        <tr><th>#</th><th>Left (carry + aaj)</th><th>Right (carry + aaj)</th><th>Match</th><th>Result</th></tr>
+        <tr>
+          <td class="num">1</td>
+          <td class="num">0 + 500 = 500</td>
+          <td class="num">0 + 300 = 300</td>
+          <td class="num">0</td>
+          <td>Matching bani hi nahi → dono side pura <strong>carry</strong> (500 aur 300). Koi wash nahi.</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td class="num">300 + 800 = 1,100</td>
+          <td class="num">500 + 1,000 = 1,500</td>
+          <td class="num">1,000</td>
+          <td>Dono side ka aaj ka business matching me lag gaya → <strong>koi wash nahi</strong>. Carry: Left <strong>100</strong>, Right <strong>500</strong>.</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td class="num">2,000 + 0 = 2,000</td>
+          <td class="num">900 + 100 = 1,000</td>
+          <td class="num">1,000</td>
+          <td>Carry: Left <strong>1,000</strong>, Right <strong>0</strong>. Koi wash nahi.</td>
+        </tr>
+        <tr class="hl-row">
+          <td class="num">4</td>
+          <td class="num">2,000 + 800 = 2,800</td>
+          <td class="num">0 + 1,200 = 1,200</td>
+          <td class="num">1,000</td>
+          <td>Strong = Left, weak = Right. Left ka aaj ka 800 pura lag gaya → carry <strong>1,800</strong>. Right ka aaj ka 200 bacha → <strong>wash 200</strong>.</td>
+        </tr>
+      </table>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Verify — aapki purani sheet se bhi match karta hai</span>
+        <p>Day-1: Left carry 1,59,400 · Right carry 2,047 → matching 2,000 → carry Left <strong>1,57,400</strong>, Right <strong>47</strong>.</p>
+        <p>Day-2: Right me 2,394 naya business → matching 2,000 (pehle aaj ka business lagta hai) → wash <strong>394</strong>.</p>
+        <p>Aapki sheet me bhi washout <strong>394</strong> hi likha tha. ✅ Pehle hum galti se 441 keh rahe the — wo tab tha jab hum maan rahe the ki matching pehle purana carry kharch karti hai. Ab order theek hai: <strong>pehle aaj ka business, phir carry</strong>.</p>
+      </div>
+
+      <h3 style="margin-top:44px;">5.4 Startup, Mentor's aur Achievers</h3>
+      <div class="grid grid-3">
+        <div class="card"><h4>Startup</h4><p>Direct PV milestones. 3,000 PV → ₹2,100 · 10,000 PV → +₹3,000 (total ₹5,100 = 51%). Ek hi baar milta hai — <strong>aur ab iski time limit bhi hai</strong>.</p></div>
+        <div class="card"><h4>Mentor's</h4><p>Sponsor tree (binary nahi) — 5 level, har level <strong>7% of BPI</strong> = max <strong>35%</strong>. Koi capping nahi.</p></div>
+        <div class="card"><h4>Achievers</h4><p>Org-1 + Org-2 PV + monthly direct sales. Rank + tour + company turnover ka %.</p></div>
+      </div>
+      <div class="callout decision" style="margin-top:18px;">
+        <span class="tag tag-decision">🟥 Mentor's — Chain Toot Jaati Hai</span>
+        <p>Agar aapke sponsee ke neeche kisi ko <strong>kisi aur ne</strong> sponsor kiya, to wo aapki level me nahi aata. Sirf wahi chain ginti hai jo sach me aapki sponsorship se neeche bani ho.</p>
+      </div>
+
+      <div class="callout confirmed" style="margin-top:18px;">
+        <span class="tag tag-confirmed">🟩 Confirmed — Startup Incentive pe TIME LIMIT</span>
+        <p>Startup Incentive ab hamesha ke liye khula nahi rahega. Member ki <strong>ID activation ki date</strong> se ek window chalti hai — Admin us window ko <strong>mahino me ya dino me</strong> set kar sakta hai (example: <strong>180 din / 6 mahine</strong>).</p>
+        <p>Us window ke andar milestone achieve ho gaya to incentive milega. Window khatam hone ke baad <strong>Startup Incentive ban hi nahi sakta</strong> — member is scheme se bahar ho jaata hai. Ye limit <strong>pehle milestone pe</strong> lagti hai.</p>
+        <p><strong>Window ki value poori tarah Admin ke haath me hai</strong> — jitne din ya mahine chahe rakh sakta hai, aur baad me badal bhi sakta hai. System me koi fix number hardcode nahi hoga. (180 din sirf ek example hai.)</p>
+      </div>
+
+      <table style="margin-top:18px;">
+        <tr><th>Lv</th><th>Rank</th><th>Left (Org-1) PV</th><th>Right (Org-2) PV</th><th>Direct Team / mahina</th><th>Reward</th><th>% Turnover</th></tr>
+        <tr><td class="num">1</td><td>Silver Director</td><td class="num">1,00,000</td><td class="num">1,00,000</td><td class="num">5,000</td><td>3N/4D Goa</td><td class="num">15%</td></tr>
+        <tr><td class="num">2</td><td>Gold Director</td><td class="num">5,00,000</td><td class="num">5,00,000</td><td class="num">25,000</td><td>Domestic tour</td><td class="num">10%</td></tr>
+        <tr><td class="num">3</td><td>Platinum Director</td><td class="num">25,00,000</td><td class="num">25,00,000</td><td class="num">50,000</td><td>Intl. + 2% car fund</td><td class="num">8%</td></tr>
+        <tr><td class="num">4</td><td>Diamond Director</td><td class="num">50,00,000</td><td class="num">50,00,000</td><td class="num">1,00,000</td><td>International tour</td><td class="num">7%</td></tr>
+        <tr><td class="num">5</td><td>Crown Director</td><td class="num">2,00,00,000</td><td class="num">2,00,00,000</td><td class="num">2,00,000</td><td>Family tour + 3% house fund</td><td class="num">7%</td></tr>
+      </table>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Direct Team target sirf EK BAAR (qualify karne ke liye)</span>
+        <p><strong>Left PV aur Right PV har mahine</strong> maintain karne hote hain — ye monthly targets hain.</p>
+        <p><strong>Direct Team ka target sirf ek baar</strong> lagta hai — jab pehli baar us rank pe qualify karna ho. <strong>Qualify hone ke baad aage Direct Team ki zaroorat nahi rehti.</strong></p>
+        <p>Example (Level 1 · Silver): Left 1,00,000 PV · Right 1,00,000 PV · Direct Team 5,000. Baaki ranks ke numbers upar table me hain.</p>
+      </div>
+      <div class="callout confirmed">
+        <span class="tag tag-confirmed">🟩 Confirmed — Aakhri 3 Levels Wala Rule</span>
+        <p>Diamond (Level 4) pe qualify karne wale achiever ko Level 2+3+4 ka pool milta hai: 40,000 + 53,333 + 70,000 = <strong>1,63,333 PV</strong> — ye aapke apne plan document ke example se exactly match karta hai. ✅</p>
+      </div>
+    </section>
+
+    <!-- JOURNEY -->
+    <section id="journey">
+      <span class="eyebrow">06 · Ek Sale — Shuru Se Aakhir Tak</span>
+      <h2>Ek hi purchase, poora system</h2>
+      <p class="lede">Ab tak humne modules alag-alag dekhe. Yahan ek hi purchase le kar dikhate hain ki poore system me kya-kya hota hai.</p>
+      <div class="stepper">
+        <div class="step-track" id="stepTrack"></div>
+        <div class="step-body" id="stepBody"></div>
+        <div class="step-nav">
+          <button class="btn ghost" onclick="stepMove(-1)">← Pichla</button>
+          <button class="btn" onclick="stepMove(1)">Agla →</button>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:22px;">
+        <p><strong>Do cheezein alag-alag chalti hain:</strong> steps 2–3 = trading business (franchise network). Steps 4–10 = incentive business (member network). Ek hi bill dono ko chalata hai, par ye kabhi mix nahi hote.</p>
+      </div>
+    </section>
+
+    <!-- DELIVERABLES -->
+    <section id="deliverables">
+      <span class="eyebrow">07 · Aapko Kya-Kya Milega</span>
+      <h2>Ek system, chaar hisse</h2>
+      <p class="lede">System ek hi jagah banega (one codebase), par uske alag-alag hisse alag logon ke liye honge.</p>
+      <div class="grid grid-2">
+        <div class="portal-card"><span class="badge public">Google pe dikhega</span><h4>Public Website + Member Login</h4><p>Landing page, company aur plan ki jaankari, aur member ka apna login — points, team, income, statement.</p></div>
+        <div class="portal-card"><span class="badge private">Private</span><h4>Franchise Portal</h4><p>Fund request, stock request, billing, invoice, stock report.</p></div>
+        <div class="portal-card"><span class="badge private">Sabse Secure</span><h4>Super Admin Panel</h4><p>Franchise banana, product/price set karna, approvals, payout, poore business ki reports.</p></div>
+        <div class="portal-card"><span class="badge public">Play / App Store</span><h4>Mobile App (baad me)</h4><p>Member ke liye app — same login, points aur team mobile pe.</p></div>
+      </div>
+      <div class="callout decision" style="margin-top:22px;">
+        <span class="tag tag-decision">🟥 Security — Ye Zaroori Hai</span>
+        <p>Sirf public website aur member login Google pe search me aayenge. Franchise portal aur Admin panel Google se poori tarah chhupe rahenge. Admin panel pe extra protection — sirf approved logon/locations se hi khulega.</p>
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section id="demo">
+      <span class="eyebrow">08 · Live Demo — Chala Ke Dekhiye</span>
+      <h2>Is document ke saath chalte hue demo bhi hain</h2>
+      <p class="lede">Browser me double-click kariye — kuch install nahi karna, internet ki bhi zaroorat nahi.</p>
+      <div class="grid grid-2">
+        <a class="demo-card" href="01-franchise-module/FLOW_INTERACTIVE.html" target="_blank"><span class="tag tag-rule">Section 3</span><h4>Franchise Flow</h4><p>Distribution network, pincode mapping, commission ladder.</p><span class="go">Kholiye ▶</span></a>
+        <a class="demo-card" href="02-product-module/PRODUCT_INTERACTIVE.html" target="_blank"><span class="tag tag-rule">Section 3</span><h4>Product &amp; Inventory Rules</h4><p>Category nesting, product fields, GST split, stock/batch behaviour.</p><span class="go">Kholiye ▶</span></a>
+        <a class="demo-card" href="02-product-module/PRODUCT_UI_CLIENT.html" target="_blank"><span class="tag tag-rule">Section 3</span><h4>Product Screens (UI mockup)</h4><p>Categories, add-product form, catalogue list, stock — jaisa app me dikhega.</p><span class="go">Kholiye ▶</span></a>
+        <a class="demo-card" href="03-billing-module/BILLING_INTERACTIVE.html" target="_blank"><span class="tag tag-rule">Section 3</span><h4>Billing &amp; Wallet</h4><p>Wallet/stock ka behaviour, fund aur stock request, limits, 50/50 rules.</p><span class="go">Kholiye ▶</span></a>
+        <a class="demo-card" href="04-user-module/USER_MODULE_INTERACTIVE.html" target="_blank"><span class="tag tag-rule">Section 4</span><h4>Member Tree</h4><p>Live binary tree — khud member add karke chain rule dekhiye.</p><span class="go">Kholiye ▶</span></a>
+        <a class="demo-card" href="05-point-incentive-module/POINT_INCENTIVE_INTERACTIVE.html" target="_blank"><span class="tag tag-rule">Section 5</span><h4>Points &amp; Incentives</h4><p>Poora incentive plan step-by-step, live BPI simulator, capping slider, achiever calculator.</p><span class="go">Kholiye ▶</span></a>
+      </div>
+      <div class="callout" style="margin-top:22px;">
+        <p><strong>Plan verify karne ka sabse acha tareeka:</strong> Points &amp; Incentives demo kholiye aur Auto Play dabaiye. Phir uske andar BPI simulator me apne numbers daaliye — matching, carry aur washout check kijiye. Koi bhi number galat lage to wahi correction Section 9 me likh dijiye.</p>
+      </div>
+    </section>
+
+    <!-- CONFIRM -->
+    <section id="confirm">
+      <span class="eyebrow">09 · Confirm Ho Chuke Points</span>
+      <h2>Sab confirm ho chuka</h2>
+      <p class="lede">Aapki last meeting ke saare points is document me utar chuke hain. Neeche poori list hai — ek baar padh kar verify kar lijiye ki humne sahi samjha hai.</p>
+      <div class="signbox" id="qlist"></div>
+    </section>
+
+    <!-- PHASES -->
+    <section id="phases">
+      <span class="eyebrow">10 · Kaise Banega — Phases</span>
+      <h2>Phase-wise, taaki jaldi chalta hua software mile</h2>
+      <div id="phaseList"></div>
+      <div class="callout rule" style="margin-top:20px;">
+        <span class="tag tag-rule">🟪 Hamari Sabse Badi Salah</span>
+        <p>Phase 4 ke baad, Phase 5 chalu karne se pehle — points ko 3–4 hafte sirf dikhaiye, paisa mat dijiye. Members apne points roz badhte dekhenge aur khud verify karenge. Baad me hone wale jhagdon se bachne ka ye sabse asardaar tareeka hai.</p>
+      </div>
+    </section>
+
+    <!-- SIGNOFF -->
+    <section id="signoff">
+      <span class="eyebrow">11 · Confirmation &amp; Sign-off</span>
+      <h2>Neeche sign karke confirm kijiye</h2>
+      <p class="lede">Is document me likhe business rules aapke plan se match karte hain — sivaay unke jinpe aapne Section 9 me correction likhi hai.</p>
+      <div class="signbox">
+        <div class="sign-grid">
+          <div class="sign-col">
+            <div class="eyebrow">Client</div>
+            <div class="sign-label">Naam</div><div class="sign-line"></div>
+            <div class="sign-label">Designation</div><div class="sign-line"></div>
+            <div class="sign-label">Signature &amp; Date</div><div class="sign-line"></div>
+          </div>
+          <div class="sign-col">
+            <div class="eyebrow">Development Team</div>
+            <div class="sign-label">Naam</div><div class="sign-line"></div>
+            <div class="sign-label">Designation</div><div class="sign-line"></div>
+            <div class="sign-label">Signature &amp; Date</div><div class="sign-line"></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:22px;">
+        <p><strong>Revision history — v1.1:</strong> Client meeting ke baad update. Badla hua: L1 Special hataya · L2 aur L3 dono ab L1 ke neeche (siblings) · L1 postpaid / L2-L3 prepaid ka alag flow · chain rule (left ka left, right ka right) theek kiya · point ab 4 tarah ke (Direct Team add) · carry-forward aur washout ka naya rule (purana carry kabhi wash nahi) · strong/weak washout hataya · Startup Incentive pe time limit · Achievers me Direct Team target · price/commission ab product-based, system me fix nahi.</p>
+        <p><strong>v1.0:</strong> Paanchon module ka pehla poora draft, client review ke liye.</p>
+        <p>Is document me sirf business rules hain. Technical design, database aur infrastructure alag <em>Technical Architecture Document</em> (dev team ke liye) me hain.</p>
+      </div>
+      <footer>Apolium Distribution &amp; Incentive Platform · System Overview v1.1 · Client Review Copy</footer>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ---------------- scrollspy ---------------- */
+const sections = [...document.querySelectorAll('main section')];
+const navLinks = [...document.querySelectorAll('.nav a')];
+function onScroll(){
+  let current = sections[0].id;
+  for(const s of sections){
+    const r = s.getBoundingClientRect();
+    if(r.top < 140) current = s.id;
+  }
+  navLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+current));
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ---------------- hero split animation ---------------- */
+function runSplit(){
+  const dm = document.getElementById('dotMoney');
+  const dp = document.getElementById('dotPoints');
+  [dm,dp].forEach(d=>{ d.classList.remove('run'); void d.offsetWidth; });
+  dm.classList.add('run'); dp.classList.add('run');
+}
+setTimeout(runSplit, 500);
+
+/* ---------------- price ladder scenario ---------------- */
+function ladderScenario(mode, btn){
+  btn.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  const rungs = document.querySelectorAll('#ladder .rung .box');
+  const leaf = document.getElementById('ladderLeaf');
+  const note = document.getElementById('ladderNote');
+  rungs.forEach(r=>r.classList.remove('dim'));
+  if(mode==='l2'){
+    leaf.querySelector('.name').textContent='L2';
+    leaf.querySelector('.price').textContent='₹750';
+    leaf.querySelector('.margin').textContent='+₹25';
+    note.querySelector('p').textContent = 'Raasta: WH ₹700 → L1 ₹725 (+₹25) → L2 ₹750 (+₹25) → Member ₹800. Is raaste me L3 aata hi nahi — wo L1 ki doosri branch hai.';
+  } else if(mode==='l3'){
+    leaf.querySelector('.name').textContent='L3';
+    leaf.querySelector('.price').textContent='₹750';
+    leaf.querySelector('.margin').textContent='+₹25';
+    note.querySelector('p').textContent = 'Raasta: WH ₹700 → L1 ₹725 (+₹25) → L3 ₹750 (+₹25) → Member ₹800. Is raaste me L2 aata hi nahi — dono L1 ke neeche alag branch hain.';
+  } else {
+    leaf.classList.add('dim');
+    leaf.querySelector('.name').textContent='L2 / L3';
+    leaf.querySelector('.price').textContent='—';
+    leaf.querySelector('.margin').textContent='shaamil nahi';
+    note.querySelector('p').textContent = 'Customer seedha L1 se le raha hai — L2/L3 beech me aate hi nahi. Poora neeche wala margin L1 ke paas rehta hai.';
+  }
+}
+
+/* ---------------- chain rule tree ---------------- */
+const chainNodesData = {
+  u1:{x:320,y:30}, u2:{x:180,y:100}, u3:{x:460,y:100},
+  u4:{x:110,y:170}, u5:{x:250,y:170}, u6:{x:50,y:240},
+  u7:{x:390,y:170}, u8:{x:530,y:170}, u9:{x:590,y:240}
+};
+const chainEdgesData = [['u1','u2'],['u1','u3'],['u2','u4'],['u2','u5'],['u4','u6'],['u3','u7'],['u3','u8'],['u8','u9']];
+function buildChainTree(){
+  const edgesG = document.getElementById('chainEdges');
+  const nodesG = document.getElementById('chainNodes');
+  edgesG.innerHTML=''; nodesG.innerHTML='';
+  chainEdgesData.forEach(([a,b])=>{
+    const A=chainNodesData[a], B=chainNodesData[b];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',A.x); line.setAttribute('y1',A.y); line.setAttribute('x2',B.x); line.setAttribute('y2',B.y);
+    line.setAttribute('class','edge'); line.dataset.pair=a+'-'+b;
+    edgesG.appendChild(line);
+  });
+  Object.entries(chainNodesData).forEach(([id,p])=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node'); g.dataset.id=id;
+    g.innerHTML = `<circle cx="${p.x}" cy="${p.y}" r="22"/><text class="id" x="${p.x}" y="${p.y+5}" text-anchor="middle">${id.toUpperCase()}</text>`;
+    nodesG.appendChild(g);
+  });
+}
+buildChainTree();
+const chainPaths = {
+  u1l:{path:['u1','u2','u4','u6'], edges:['u1-u2','u2-u4','u4-u6'], caption:'U1 se LEFT → sirf left→left→left: U1 → U2 → U4 → U6. U6 ka left khaali hai, naya member wahin lagega. U5 aur U7/U8 beech me aate hi nahi.'},
+  u1r:{path:['u1','u3','u8','u9'], edges:['u1-u3','u3-u8','u8-u9'], caption:'U1 se RIGHT → sirf right→right→right: U1 → U3 → U8 → U9. U7 (U3 ka left) is chain me nahi aata — right ki chain kabhi left me nahi mudti.'},
+  u2r:{path:['u2','u5'], edges:['u2-u5'], caption:'U2 se RIGHT → U2 → U5. U5 ka right khaali hai, wahin lagega. Doosri side ki branches kabhi touch nahi hoti.'}
+};
+function chainDemo(key, btn){
+  btn.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#chainNodes .node').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('#chainEdges .edge').forEach(e=>e.classList.remove('active'));
+  const d = chainPaths[key];
+  d.path.forEach(id=>document.querySelector(`#chainNodes .node[data-id="${id}"]`).classList.add('active'));
+  d.edges.forEach(pair=>document.querySelector(`#chainEdges .edge[data-pair="${pair}"]`).classList.add('active'));
+  document.getElementById('chainCaption').textContent = d.caption;
+}
+chainDemo('u1l', document.querySelector('.tree-wrap .chip'));
+
+/* ---------------- point flow tree ---------------- */
+const pointNodesData = {
+  u1:{x:320,y:30}, u2:{x:190,y:100}, u3:{x:450,y:100},
+  u4:{x:130,y:170}, u5:{x:265,y:170}, u6:{x:75,y:240}, u7:{x:390,y:170}, u8:{x:33,y:300}
+};
+const pointEdgesClean = [['u1','u2'],['u1','u3'],['u2','u4'],['u2','u5'],['u4','u6'],['u3','u7'],['u6','u8']];
+function buildPointTree(){
+  const edgesG = document.getElementById('pointEdges');
+  const nodesG = document.getElementById('pointNodes');
+  edgesG.innerHTML=''; nodesG.innerHTML='';
+  pointEdgesClean.forEach(([a,b])=>{
+    const A=pointNodesData[a], B=pointNodesData[b];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',A.x); line.setAttribute('y1',A.y); line.setAttribute('x2',B.x); line.setAttribute('y2',B.y);
+    line.setAttribute('class','edge');
+    edgesG.appendChild(line);
+  });
+  Object.entries(pointNodesData).forEach(([id,p])=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node'); g.dataset.id=id;
+    g.innerHTML = `<circle cx="${p.x}" cy="${p.y}" r="22"/><text class="id" x="${p.x}" y="${p.y+5}" text-anchor="middle">${id.toUpperCase()}</text><text class="badge" x="${p.x}" y="${p.y+38}" text-anchor="middle"></text>`;
+    nodesG.appendChild(g);
+  });
+}
+buildPointTree();
+const purchaseLabels = { u8:'SELF +1000', u1:'DIRECT + LEFT TEAM +1000', u6:'LEFT TEAM +1000', u4:'LEFT TEAM +1000', u2:'LEFT TEAM +1000' };
+function simulatePurchase(){
+  resetPurchase();
+  const order = ['u8','u6','u4','u2','u1'];
+  order.forEach((id,i)=>{
+    setTimeout(()=>{
+      const n = document.querySelector(`#pointNodes .node[data-id="${id}"]`);
+      n.classList.add('active','show-badge');
+      n.querySelector('.badge').textContent = purchaseLabels[id];
+    }, i*550);
+  });
+}
+function resetPurchase(){
+  document.querySelectorAll('#pointNodes .node').forEach(n=>{ n.classList.remove('active','show-badge'); n.querySelector('.badge').textContent=''; });
+}
+
+/* ---------------- capping level ---------------- */
+const levels = [
+  {level:0, min:0, cap:0, maxRs:0, label:'Level 0 · 0–249 PV · koi payout nahi'},
+  {level:1, min:250, cap:1000, maxRs:800, label:'Level 1 · 250 Self PV · daily cap 1,000 · max ₹800/din'},
+  {level:2, min:500, cap:2000, maxRs:1600, label:'Level 2 · 500 Self PV · daily cap 2,000 · max ₹1,600/din'},
+  {level:3, min:750, cap:3000, maxRs:2400, label:'Level 3 · 750 Self PV · daily cap 3,000 · max ₹2,400/din'},
+  {level:4, min:1000, cap:4000, maxRs:3200, label:'Level 4 · 1,000 Self PV · daily cap 4,000 · max ₹3,200/din'},
+  {level:5, min:2000, cap:5000, maxRs:4000, label:'Level 5 · 2,000 Self PV · daily cap 5,000 · max ₹4,000/din'},
+  {level:6, min:3000, cap:7000, maxRs:5600, label:'Level 6 · 3,000 Self PV · daily cap 7,000 · max ₹5,600/din'},
+  {level:7, min:4000, cap:10000, maxRs:8000, label:'Level 7 · 4,000 Self PV · daily cap 10,000 · max ₹8,000/din'},
+  {level:8, min:5000, cap:12000, maxRs:9600, label:'Level 8 · 5,000 Self PV · daily cap 12,000 · max ₹9,600/din'},
+];
+function getLevel(selfPv){
+  let cur = levels[0];
+  for(const l of levels){ if(selfPv >= l.min) cur = l; }
+  return cur;
+}
+function buildLevelBar(){
+  const bar = document.getElementById('levelBar');
+  bar.innerHTML = levels.slice(1).map(l=>`<div class="level-seg" data-level="${l.level}">L${l.level}</div>`).join('');
+}
+buildLevelBar();
+function onSelfPvChange(){
+  const v = +document.getElementById('selfPvSlider').value;
+  document.getElementById('selfPvVal').textContent = v.toLocaleString('en-IN');
+  const cur = getLevel(v);
+  document.querySelectorAll('.level-seg').forEach(seg=>{
+    seg.classList.toggle('on', +seg.dataset.level === cur.level && cur.level>0);
+  });
+  document.getElementById('levelDesc').textContent = cur.label;
+  calcBPI();
+}
+
+/* ---------------- BPI simulator ---------------- */
+function calcBPI(){
+  const oldLeft = +document.getElementById('oldLeft').value || 0;
+  const oldRight = +document.getElementById('oldRight').value || 0;
+  const newLeft = +document.getElementById('newLeft').value || 0;
+  const newRight = +document.getElementById('newRight').value || 0;
+  const selfPv = +document.getElementById('selfPvSlider').value || 0;
+  const cap = getLevel(selfPv).cap;
+
+  const totalLeft = oldLeft + newLeft;
+  const totalRight = oldRight + newRight;
+  const matchedRounded = Math.floor(Math.min(totalLeft, totalRight)/1000)*1000;
+  const cappedMatch = Math.min(matchedRounded, cap);
+  const payout = Math.round(cappedMatch*0.8);
+
+  function splitSide(carryPv, todayPv){
+    const tUsed = Math.min(todayPv, cappedMatch);
+    const cUsed = Math.min(carryPv, cappedMatch - tUsed);
+    return { todayLeft: todayPv - tUsed, carryLeft: carryPv - cUsed };
+  }
+  const L = splitSide(oldLeft, newLeft);
+  const R = splitSide(oldRight, newRight);
+
+  let washL = L.todayLeft, washR = R.todayLeft;
+  const strongIsL = totalLeft > totalRight, strongIsR = totalRight > totalLeft;
+  if(cappedMatch === 0){
+    washL = 0; washR = 0;
+  } else {
+    const weakWash = strongIsL ? washR : (strongIsR ? washL : Math.min(washL, washR));
+    if(weakWash === 0){
+      if(strongIsL) washL = 0; else if(strongIsR) washR = 0; else { washL = 0; washR = 0; }
+    }
+  }
+  const carryOutL = L.carryLeft + (L.todayLeft - washL);
+  const carryOutR = R.carryLeft + (R.todayLeft - washR);
+
+  const fm = n => n.toLocaleString('en-IN');
+  const strongName = strongIsL ? 'Left' : (strongIsR ? 'Right' : 'dono barabar');
+  const weakName   = strongIsL ? 'Right' : (strongIsR ? 'Left' : 'dono barabar');
+
+  let washMsg;
+  if(cappedMatch === 0){
+    washMsg = 'Matching bani hi nahi — kuch wash nahi hua, dono side ka pura PV aage jaayega.';
+  } else if(washL || washR){
+    washMsg = 'Strong side = ' + strongName + ', weak side = ' + weakName + '. Wash sirf AAJ ke bache hue business ka — Left ' + fm(washL) + ', Right ' + fm(washR) + '. Purana carry poora bach gaya.';
+  } else {
+    washMsg = 'Strong side = ' + strongName + ', weak side = ' + weakName + '. Weak side pe wash nahi hua → strong side pe bhi nahi hoga. Kuch wash nahi.';
+  }
+
+  document.getElementById('rMatched').textContent = fm(cappedMatch);
+  document.getElementById('rPayout').textContent = '₹'+fm(payout);
+  document.getElementById('rCarryLeft').textContent = fm(carryOutL);
+  document.getElementById('rCarryRight').textContent = fm(carryOutR);
+  document.getElementById('washNote').textContent = washMsg + '  (Daily cap = ' + fm(cap) + ' PV. Matching pehle AAJ ka business kharch karti hai, phir purana carry.)';
+}
+onSelfPvChange();
+
+/* ---------------- sale journey stepper ---------------- */
+const journeySteps = [
+  {kicker:'Module 5', type:'incentive', title:'1 · ID', text:'Cashier member ki unique ID daalta hai. System uski poori detail utha leta hai. ID ke bina bill nahi banta.'},
+  {kicker:'Module 2', type:'trading', title:'2 · Bill', text:'Products add hote hain, GST lagti hai. Bill bechne wali shop ke naam se banta hai.'},
+  {kicker:'Module 3', type:'trading', title:'3 · Stock Kam', text:'Us franchise ka stock kam hota hai. Wallet ko haath nahi lagta.'},
+  {kicker:'Module 2', type:'incentive', title:'4 · Points Bane', text:'Bill ke saare products ka total PV nikalta hai.'},
+  {kicker:'Module 5', type:'incentive', title:'5 · Self Point', text:'Self point buyer ko — isse uska capping level upar ja sakta hai.'},
+  {kicker:'Module 5', type:'incentive', title:'6 · Direct + Direct Team', text:'Direct point buyer ke sponsor ko. Saath me Direct Team point bhi banta hai — wo Achievers ki qualification me lagta hai.'},
+  {kicker:'Module 4 + 5', type:'incentive', title:'7 · Team Point', text:'Team point tree me upar har member ko — apni Left ya Right side me.'},
+  {kicker:'Module 5', type:'incentive', title:'8 · BPI Matching', text:'Us raat BPI matching chalti hai: pehle purana carry match hota hai, phir aaj ka business → capping → 80% payout. Purana carry bacha to aage jaata hai, aaj ka bacha hua wash ho jaata hai.'},
+  {kicker:'Module 5', type:'incentive', title:"9 · Mentor's Incentive", text:'Sponsor tree me 5 level tak, har level ko BPI ka 7%.'},
+  {kicker:'Module 5', type:'incentive', title:'10 · Achievers', text:'Mahine ke end me Achievers ki qualification aur pool distribution.'},
+  {kicker:'Sab', type:'incentive', title:'11 · Permanent Record', text:'Upar ka har step permanent record me likha jaata hai — kabhi bhi check ho sakta hai.'},
+];
+let stepIdx=0;
+function buildStepTrack(){
+  const track = document.getElementById('stepTrack');
+  track.innerHTML = journeySteps.map((s,i)=>`<div class="step-dot ${s.type} ${i===stepIdx?'active':''}" onclick="goStep(${i})"></div>`).join('');
+}
+function renderStep(){
+  const s = journeySteps[stepIdx];
+  document.getElementById('stepBody').innerHTML = `<div class="kicker ${s.type}">${s.kicker} · ${s.type==='trading'?'Trading Business':'Incentive Business'}</div><h4>${s.title}</h4><p style="max-width:60ch;">${s.text}</p>`;
+  buildStepTrack();
+}
+function goStep(i){ stepIdx=i; renderStep(); }
+function stepMove(d){ stepIdx = (stepIdx+d+journeySteps.length)%journeySteps.length; renderStep(); }
+renderStep();
+
+/* ---------------- confirm questions ---------------- */
+const questions = [
+  {q:'Nayi structure me commission kaise bantega?', a:'L2 aur L3 ke beech koi rishta nahi — baaki flow pehle jaisa', status:'☑ Confirm — har level ko apna set commission, product master se', ok:true},
+  {q:'"Missing level ka roll-up" rule ab hai ya nahi?', a:'Khatam ho gaya', status:'☑ Confirm — roll-up ab nahi hai', ok:true},
+  {q:'L1 (postpaid) ke billing ka paisa kahan jaata hai?', a:'L1 kabhi real money pehle deta hi nahi', status:'☑ Confirm — limit hai, wallet minus/plus hota rehta hai, jaise pehle', ok:true},
+  {q:'L1 ki credit limit har franchise ke liye same ya alag?', a:'Har franchise ki apni', status:'☑ Confirm — Admin har L1 ke liye alag set karta hai', ok:true},
+  {q:'Achievers ke rank targets — Level 1 se 5 tak?', a:'Table me pehle se hain', status:'☑ Confirm — Left PV + Right PV monthly, Direct Team sirf ek baar qualify karne ke liye', ok:true},
+  {q:'Startup Incentive ki time-limit window kitni?', a:'Admin ke haath me', status:'☑ Confirm — Admin jo chahe rakhe (din ya mahine), baad me badal bhi sakta hai', ok:true},
+  {q:'Bill cancel ya stock return pe kya hoga?', a:'Poora flow reverse', status:'☑ Confirm — stock, commission, wallet sab reverse ho jaate hain', ok:true},
+  {q:'Payout kaise — kitni baar, TDS?', a:'Monthly ek baar', status:'☑ Confirm — mahine me 1 baar, TDS 2%', ok:true},
+  {q:'Carry forward aur washout ka rule?', a:'Matching pehle AAJ ka business, phir purana carry', status:'☑ Confirm — purana carry kabhi wash nahi, sirf aaj ka bacha hua wash. Sir ke chaaro example match karte hain', ok:true},
+  {q:'Strong side / weak side ka rule?', a:'Chalu hai — total (carry + aaj) se decide hota hai', status:'☑ Confirm — weak side pe wash nahi hua to strong side pe bhi nahi', ok:true},
+  {q:'Point kitne tarah ke — 3 ya 4?', a:'Chaar: Self · Direct · Direct Team · Team', status:'☑ Confirm — Direct Team alag point hai, Achievers me lagta hai', ok:true},
+  {q:'Chain rule — left ka left, right ka right?', a:'Haan — chain na beech me rukti hai, na side badalti hai', status:'☑ Confirm — index aur simulator dono theek kar diye gaye', ok:true},
+  {q:'L1 Special / koi bhi special level — ab hai?', a:'Poori tarah hata diya', status:'☑ Confirm — sirf normal L1, L2, L3', ok:true},
+  {q:'Price aur commission fix hain ya product ke saath aate hain?', a:'Product ke saath', status:'☑ Confirm — Admin har product pe har level ka rate set karta hai', ok:true},
+  {q:'Billing ke waqt cost price change kar sakte hain?', a:'Haan — bill usi cost pe banega', status:'☑ Confirm', ok:true},
+  {q:'GV aur CV exactly kaise use honge?', a:'GV Achiever pool turnover me', status:'GV = Achiever pool turnover me use hota hai. CV ka detail baaki hai', ok:true},
+];
+
+document.getElementById('qlist').innerHTML = questions.map((item,i)=>`
+  <div class="qrow">
+    <div class="qn">${String(i+1).padStart(2,'0')}</div>
+    <div><div class="qtext">${item.q}</div><div class="qassume">Humne ye maana: ${item.a}</div></div>
+    <div class="answer ${item.ok?'ok':'pending'}">${item.status}</div>
+  </div>`).join('');
+
+/* ---------------- phases ---------------- */
+const phases = [
+  {n:1, title:'Foundation', text:'Admin panel, franchise setup, products, pricing, users, roles aur permissions.'},
+  {n:2, title:'Trading', text:'Fund request, stock request, billing, invoice, GST, stock aur wallet limits. Ye akela bhi live ja sakta hai.'},
+  {n:3, title:'Network', text:'Member registration, KYC, binary tree, sponsor & placement, member portal.'},
+  {n:4, title:'Points', text:'Har bill pe PV/GV capture, self/direct/team distribution, member ka point statement.'},
+  {n:5, title:'Incentives', text:"BPI daily matching, capping, carry/wash, weekly payout, Startup aur Mentor's incentive."},
+  {n:6, title:'Ranks & Payout', text:'Achievers, monthly pool distribution, payout processing, reports.'},
+];
+document.getElementById('phaseList').innerHTML = phases.map(p=>`
+  <div class="phase-row"><div class="phase-n">${String(p.n).padStart(2,'0')}</div><div><h4 style="margin:0 0 4px 0;">${p.title}</h4><p style="margin:0;">${p.text}</p></div></div>`).join('');
+</script>
+</body>
+</html>

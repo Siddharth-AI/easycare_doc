@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Billing & Wallet Module — Interactive</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#131a2c;--panel2:#0f1626;--line:#243049;--line2:#2f3d5c;
+  --txt:#e9eefb;--txt2:#a3b1cc;--txt3:#6b7c9c;
+  --wh:#7c3aed;--mwh:#2563eb;--l1:#0891b2;--l2:#0d9488;--cust:#f59e0b;
+  --limit:#3b82f6;--stock:#a78bfa;--avail:#22d3ee;--wallet:#34d399;--slimit:#f472b6;
+  --pos:#22c55e;--neg:#ef4444;--comm:#f59e0b;--retail:#94a3b8;
+  --shadow:0 10px 34px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;background:
+  radial-gradient(1000px 500px at 80% -10%,rgba(124,58,237,.10),transparent),
+  radial-gradient(900px 450px at 0% 0%,rgba(37,99,235,.10),transparent),var(--bg);
+  color:var(--txt);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+header{padding:12px 22px;background:rgba(19,26,44,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+header h1{margin:0;font-size:1.05rem;font-weight:800;color:#c7d7ff;}
+.tabs{display:flex;gap:5px;background:var(--panel2);padding:4px;border-radius:11px;border:1px solid var(--line);}
+.tab{border:none;background:transparent;color:var(--txt2);padding:7px 15px;border-radius:8px;font-weight:700;font-size:.84rem;cursor:pointer;}
+.tab.on{background:var(--mwh);color:#fff;}
+.grow{flex:1;}
+.wrap{flex:1;display:flex;min-height:0;}
+#stage{flex:1.5;min-width:0;padding:18px 22px;overflow:auto;}
+#side{width:400px;flex-shrink:0;border-left:1px solid var(--line);padding:20px 22px;overflow:auto;background:rgba(15,22,38,.5);}
+
+/* chain */
+.chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.node{padding:9px 15px;border-radius:11px;font-weight:800;font-size:.84rem;border:2px solid transparent;background:var(--panel);color:var(--txt2);transition:.3s;}
+.node.wh{border-color:var(--wh);} .node.mwh{border-color:var(--mwh);} .node.l1{border-color:var(--l1);} .node.l2{border-color:var(--l2);} .node.cust{border-color:var(--cust);}
+.node.act{transform:scale(1.06);box-shadow:0 0 0 3px rgba(255,255,255,.10),0 8px 22px rgba(0,0,0,.4);color:#fff;}
+.node.act.wh{background:var(--wh);} .node.act.mwh{background:var(--mwh);} .node.act.l1{background:var(--l1);} .node.act.l2{background:var(--l2);} .node.act.cust{background:var(--cust);color:#3a2a00;}
+.arw{color:var(--txt3);font-weight:800;}
+.arw.flow{color:#22d3ee;text-shadow:0 0 10px rgba(34,211,238,.6);}
+
+/* owner label */
+.owner{display:flex;align-items:center;gap:9px;margin:6px 0 12px;}
+.owner .badge{background:var(--mwh);color:#fff;font-weight:800;font-size:.72rem;padding:4px 11px;border-radius:999px;}
+.owner .nm{font-weight:800;font-size:1.05rem;}
+.owner .sub{color:var(--txt3);font-size:.82rem;}
+
+/* wallet cards */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+.card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:15px;padding:15px 16px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.card .lbl{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);display:flex;align-items:center;gap:6px;}
+.card .val{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;}
+.card .note{font-size:.72rem;color:var(--txt3);margin-top:3px;}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,transparent);}
+.card.limit{--c:var(--limit);} .card.stock{--c:var(--stock);} .card.avail{--c:var(--avail);}
+.card.main{--c:var(--pos);} .card.comm{--c:var(--comm);} .card.retail{--c:var(--retail);}
+.card.wallet{--c:var(--wallet);} .card.slimit{--c:var(--slimit);}
+.card.limit .val{color:#93c5fd;} .card.stock .val{color:#c4b5fd;} .card.avail .val{color:#67e8f9;}
+.card.comm .val{color:#fcd34d;} .card.retail .val{color:#cbd5e1;}
+.card.wallet .val{color:#6ee7b7;} .card.slimit .val{color:#f9a8d4;}
+.card.main.p .val{color:#4ade80;} .card.main.n .val{color:#f87171;} .card.main.p{--c:var(--pos);} .card.main.n{--c:var(--neg);}
+.card.chg{animation:pop .5s ease;}
+@keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.05);box-shadow:0 0 0 3px rgba(255,255,255,.14),var(--shadow);}100%{transform:scale(1);}}
+.pill{position:absolute;top:12px;right:12px;font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:999px;}
+.pill.tr{background:rgba(245,158,11,.18);color:#fcd34d;border:1px solid rgba(245,158,11,.4);}
+.pill.ro{background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.35);}
+
+/* second entity (L1) */
+.second{opacity:.95;}
+.second .owner .badge{background:var(--l1);}
+
+/* formula */
+.formula{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:13px 16px;font-family:Consolas,monospace;font-size:.84rem;color:#a5f3fc;margin-top:8px;}
+.formula b{color:#fff;}
+
+/* wh box */
+.whbox{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.mini{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px 14px;flex:1;min-width:140px;}
+.mini .l{font-size:.66rem;color:var(--txt3);font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+.mini .v{font-size:1.05rem;font-weight:800;margin-top:3px;color:#e2e8f0;font-variant-numeric:tabular-nums;}
+.mini.whx .v{color:#c4b5fd;}
+
+/* side */
+.kick{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--avail);font-weight:800;margin-bottom:8px;}
+#title{font-size:1.35rem;font-weight:800;margin:0 0 12px;color:#fff;line-height:1.25;}
+#body{font-size:1rem;line-height:1.75;color:var(--txt2);}
+#body b{color:#fde68a;}
+#body .hi{color:#67e8f9;font-weight:700;}
+#body .neg{color:#f87171;font-weight:700;}
+#body .pos{color:#4ade80;font-weight:700;}
+.box{border-radius:11px;padding:11px 14px;margin:11px 0;border-left:3px solid;font-size:.92rem;}
+.box.rule{background:rgba(37,99,235,.1);border-color:#2563eb;}
+.box.warn{background:rgba(245,158,11,.1);border-color:#f59e0b;}
+.box .l{font-weight:800;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.box.rule .l{color:#93c5fd;} .box.warn .l{color:#fcd34d;}
+
+/* rules tab content */
+.rules{max-width:900px;}
+.rules h3{color:#c7d7ff;margin:18px 0 6px;font-size:1.1rem;}
+.rules table{width:100%;border-collapse:collapse;font-size:.9rem;margin:8px 0;}
+.rules th{background:var(--panel2);color:#93c5fd;text-align:left;padding:9px 12px;border:1px solid var(--line2);font-size:.75rem;text-transform:uppercase;}
+.rules td{padding:9px 12px;border:1px solid var(--line);color:var(--txt2);}
+.rules td b{color:#fff;}
+.q{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:11px;padding:12px 16px;margin:8px 0;}
+.q b{color:#fca5a5;}
+
+footer{padding:13px 22px;background:rgba(19,26,44,.8);border-top:1px solid var(--line);display:flex;gap:11px;align-items:center;flex-wrap:wrap;}
+button.nav{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:.92rem;cursor:pointer;}
+#next{background:linear-gradient(90deg,#2563eb,#22d3ee);color:#04121e;}
+#back{background:var(--panel);color:var(--txt2);border:1px solid var(--line2);}
+#play{background:#16a34a;color:#03130a;} #reset{background:#475569;color:#fff;}
+button.nav:disabled{opacity:.35;cursor:not-allowed;}
+.prog{flex:1;height:7px;background:var(--line);border-radius:5px;overflow:hidden;min-width:110px;}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#22d3ee);transition:width .35s;}
+.cnt{font-size:.85rem;color:var(--txt3);font-weight:700;min-width:56px;text-align:right;}
+@media(max-width:1150px){.wrap{flex-direction:column;}#side{width:auto;border-left:none;border-top:1px solid var(--line);}.grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<header>
+  <h1>💰 Billing &amp; Wallet Module</h1>
+  <div class="tabs">
+    <button class="tab on" data-s="A">A · Customer Sale</button>
+    <button class="tab" data-s="B">B · Franchise Sale</button>
+    <button class="tab" data-s="C">C · Full Example</button>
+    <button class="tab" data-s="D">D · L2/L3 Prepaid Flow</button>
+    <button class="tab" data-s="E">E · Postpaid vs Prepaid</button>
+    <button class="tab" data-s="R">📋 Rules</button>
+  </div>
+  <div class="grow"></div>
+  <span style="color:var(--txt3);font-size:.78rem">MWH = Mini-Warehouse · L1 = Level 1</span>
+</header>
+
+<div class="wrap">
+  <div id="stage"></div>
+  <div id="side">
+    <div class="kick" id="kick"></div>
+    <h2 id="title"></h2>
+    <div id="body"></div>
+  </div>
+</div>
+
+<footer>
+  <button class="nav" id="back">◀ Back</button>
+  <button class="nav" id="next">Next ▶</button>
+  <button class="nav" id="play">▶ Auto</button>
+  <button class="nav" id="reset">↻ Reset</button>
+  <div class="prog"><i id="bar"></i></div>
+  <span class="cnt" id="cnt"></span>
+</footer>
+
+<script>
+const inr = n => (n<0?'−':'') + '₹' + Math.abs(n).toLocaleString('en-IN');
+const L = n => '₹' + (n/100000).toFixed(n%100000===0?0:2).replace(/\.00$/,'') + ' L';
+
+/* ---------- SCENARIO A : MWH customer sale ---------- */
+const A = [
+{k:'Setup', t:'MWH ko inventory limit mili', chain:['WH','MWH'], act:'MWH',
+ s:{limit:2000000, stock:0, main:0, comm:0, retail:0}, chg:['limit'],
+ b:`Warehouse ne <b>Mini-Warehouse (MWH)</b> ko <span class="hi">₹20 Lakh</span> ki <b>inventory limit</b> di.<br><br>
+    Ye limit = <b>udhaari ki limit</b>. Matlab MWH itne ka maal <b>bina paisa diye</b> utha sakta hai.
+    <div class="box rule"><span class="l">Abhi</span>Main Wallet <b>₹0.00</b> (default) · Stock ₹0 · Available limit <span class="hi">₹20 L</span></div>`},
+
+{k:'Purchase Order', t:'MWH ne ₹15 Lakh ka maal uthaya', chain:['WH','MWH'], act:'MWH', flow:0,
+ s:{limit:2000000, stock:1500000, main:0, comm:0, retail:0}, chg:['stock','avail'],
+ b:`MWH ne WH se <b>₹15 Lakh</b> ka maal utha liya (dispatch ho gaya).<br><br>
+    • Current stock = <span class="hi">₹15 L</span><br>
+    • Remaining limit = <span class="hi">₹5 L</span><br>
+    • <b>Main wallet abhi bhi ₹0</b> — kyunki maal <b>udhaar</b> pe liya, paisa nahi diya.
+    <div class="box rule"><span class="l">Rule 1</span>Stock uthane pe <b>main wallet pe koi asar nahi</b> — sirf inventory limit use hoti hai.</div>`},
+
+{k:'Customer Sale', t:'MWH ne ₹1 Lakh ka maal CUSTOMER ko becha', chain:['MWH','Customer'], act:'MWH', flow:0,
+ s:{limit:2000000, stock:1400000, main:-100000, comm:0, retail:0}, chg:['main','stock','avail'],
+ b:`MWH ne <b>₹1,00,000</b> ka maal seedha <b>customer</b> ko becha.<br><br>
+    • Maal bik gaya → stock <span class="hi">₹14 L</span> bacha<br>
+    • <b>Main Wallet = <span class="neg">−₹1,00,000</span></b> (sale value jitna)<br>
+    • Available limit = 20 − 14 <b>− 1</b> = <span class="hi">₹5 L</span><br><br>
+    <b>Kyun minus?</b> Wo maal <b>udhaar ka tha</b> — ab bik gaya, to us maal ka paisa <b>WH ko dena hai</b>.
+    <div class="box rule"><span class="l">Rule 2</span><b>Customer sale</b> → main wallet <b>minus (sale value / DP)</b>. Ye paisa <b>WH (company) ko dena hai</b> — kisi franchise ko nahi.</div>
+    <div class="box warn"><span class="l">Dhyan</span>Udhaar (minus main wallet) bhi <b>limit se katta hai</b> — stock nikla par udhaar chadha, isliye available limit ₹5 L hi rahi.</div>`},
+
+{k:'Commission', t:'Commission ban gaya — 50% / 50%', chain:['MWH','Customer'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:-100000, comm:5000, retail:0}, chg:['comm'], whGain:5000,
+ b:`Product banate waqt hum <b>har level ki price</b> daalte hain — MWH, L1, L2 sab ki.<br><br>
+    Is ₹1 Lakh sale pe:<br>
+    • Customer price <b>(DP)</b> − MWH ki price <b>(FP)</b> = <b>₹10,000</b> ka margin<br>
+    • Ye <b>50 / 50</b> bat jaata hai:<br>
+    &nbsp;&nbsp;→ <span class="hi">₹5,000</span> MWH ke <b>Commission Wallet</b> me<br>
+    &nbsp;&nbsp;→ <span class="hi">₹5,000</span> <b>Warehouse (company)</b> ko
+    <div class="box rule"><span class="l">Rule 3</span>Commission = <b>margin (jitne me becha − apni price)</b> → <b>50% apna, 50% company (WH) ka</b>. Har level ko <b>apne bechne pe</b> milta hai.</div>`},
+
+{k:'Retail Profit', t:'Standard se UPAR becha → Retail Profit', chain:['MWH','Customer'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:-100000, comm:5000, retail:2000}, chg:['retail'],
+ b:`Agar MWH ne <b>standard price se zyada</b> me becha (jaise ₹10,000 ki jagah <b>₹12,000</b> ka margin nikala):<br><br>
+    • Standard margin ₹10,000 → wahi 50/50 (₹5,000 + ₹5,000)<br>
+    • <b>Extra ₹2,000</b> → <b>Retail Profit Wallet</b> me jaayega — <b>100% uska</b>
+    <div class="box warn"><span class="l">Dhyan</span><b>Retail Profit Wallet sirf DIKHTA hai</b> — usse kuch nahi kar sakta (transfer/withdraw nahi). Sirf apna profit dekhne ke liye.</div>`},
+
+{k:'Transfer', t:'Commission → Main Wallet transfer', chain:['MWH'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:-95000, comm:0, retail:2000}, chg:['main','comm'],
+ b:`Commission Wallet me <b>button</b> hai — jab chaahe <b>Main Wallet me transfer</b> kar sakta hai.<br><br>
+    Usne ₹5,000 transfer kiya:<br>
+    <b>−₹1,00,000 + ₹5,000 = <span class="neg">−₹95,000</span></b><br><br>
+    Ab uska WH ko sirf <b>₹95,000</b> dena bacha.
+    <div class="box rule"><span class="l">Rule 4</span><b>Commission Wallet → Main Wallet</b> transfer ho sakta (button se). Retail wallet nahi.</div>`},
+
+{k:'Fund Request', t:'₹2 Lakh advance jama kiya', chain:['MWH'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:105000, comm:0, retail:2000}, chg:['main','avail'],
+ b:`MWH ne <b>Fund Request</b> se <b>₹2,00,000</b> advance jama karaya.<br><br>
+    <b>−₹95,000 + ₹2,00,000 = <span class="pos">+₹1,05,000</span></b><br><br>
+    Ab main wallet <b>positive</b> hai — matlab uske paas company ke paas paisa jama hai.
+    <div class="box rule"><span class="l">Rule 5</span><b>Fund Request</b> = advance paisa jama → seedha <b>Main Wallet</b> me add.</div>`},
+
+{k:'Limit Calc', t:'Ab kitna maal aur utha sakta?', chain:['WH','MWH'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:105000, comm:0, retail:2000}, chg:['avail'], showF:true,
+ b:`Available limit ka hisaab:<br><br>
+    • Inventory limit <b>₹20 L</b> − stock <b>₹14 L</b> = ₹6 L<br>
+    • Main wallet <b>+₹1,05,000</b> (jama hai) → <b>plus</b> ho jaayega<br><br>
+    <b>Total = <span class="hi">₹7.05 Lakh</span></b> ka aur maal utha sakta hai.
+    <div class="box rule"><span class="l">Formula</span>Available = <b>Limit − Stock + Main Wallet</b><br>Main wallet <b>plus</b> ho to buying power badhti · <b>minus</b> (udhaar) ho to <b>ghatti</b>.</div>`},
+];
+
+/* ---------- SCENARIO B : Franchise sale ---------- */
+const B = [
+{k:'Prices', t:'Product ki price — har level ki alag', chain:['WH','MWH','L1','Customer'], act:null,
+ s:{limit:2000000, stock:1400000, main:105000, comm:0, retail:2000}, chg:[], prices:true,
+ b:`Product banate waqt <b>har level ki price</b> set hoti hai:<br><br>
+    • <b>DP (customer price)</b> = <span class="hi">₹800</span><br>
+    • <b>MWH ki price</b> = <span class="hi">₹670</span><br>
+    • <b>L1 ki price</b> = <span class="hi">₹700</span><br><br>
+    Ab dekho jab MWH apna maal <b>L1 (franchise)</b> ko bechta hai — customer ko nahi.`},
+
+{k:'Franchise Sale', t:'MWH → L1 ko maal becha', chain:['MWH','L1'], act:'MWH', flow:0,
+ s:{limit:2000000, stock:1400000, main:105000, comm:0, retail:2000}, chg:[], prices:true, l1:{stock:0},
+ b:`MWH ne apna maal <b>L1 ko ₹700</b> pe diya (L1 ki franchise price).<br><br>
+    <div class="box warn"><span class="l">⚠️ Sabse important</span><b>Main Wallet me KOI asar nahi</b> — na MWH ka, na L1 ka!<br><br>
+    Kyunki <b>MWH, L1, L2 ke beech paise ka len-den hota hi nahi</b>. Sirf <b>maal (stock)</b> aage jaata hai.</div>
+    Main wallet tab badalta hai jab maal <b>customer</b> ko jaata hai.`},
+
+{k:'Commission', t:'MWH ko commission mila — 50/50', chain:['MWH','L1'], act:'MWH',
+ s:{limit:2000000, stock:1400000, main:105000, comm:30, retail:2000}, chg:['comm'], prices:true, whGain:15,
+ b:`MWH ka margin = <b>L1 ki price − MWH ki price</b><br>
+    = ₹700 − ₹670 = <b>₹30</b><br><br>
+    Ye bhi <b>50 / 50</b>:<br>
+    • <span class="hi">₹15</span> → MWH ke Commission Wallet<br>
+    • <span class="hi">₹15</span> → Warehouse ko
+    <div class="box rule"><span class="l">Rule</span>Franchise sale pe bhi commission wahi tarike se — <b>margin ka 50/50</b>. Bas <b>main wallet nahi hilta</b>.</div>`},
+
+{k:'Stock Move', t:'Stock MWH se L1 me chala gaya', chain:['MWH','L1'], act:'L1',
+ s:{limit:2000000, stock:1400000, main:105000, comm:30, retail:2000}, chg:['stock','avail'], prices:true, l1:{stock:1},
+ b:`• MWH ka <b>stock kam</b> hua → uski <b>available limit badh gayi</b> (ab aur maal utha sakta)<br>
+    • L1 ka <b>stock badh gaya</b> → <b>L1 ki apni inventory limit</b> use hui<br><br>
+    Ab jab <b>L1 customer ko bechega</b>, tab <b>L1 ka main wallet minus</b> hoga (aur L1 ko uska commission milega).
+    <div class="box rule"><span class="l">Yaad rakho</span>Franchise-to-franchise = sirf <b>stock + commission</b>. Customer sale = <b>paisa (main wallet)</b>.</div>`},
+];
+
+/* ---------- SCENARIO C : Pradeep + Siddharth ---------- */
+const C = [
+{k:'Setup', t:'Pradeep (MWH) — limit ₹15 Lakh', chain:['WH','MWH','L1'], act:'MWH', names:1,
+ s:{limit:1500000, stock:0, main:0, comm:0, retail:0}, chg:['limit'], l1:{stock:0},
+ b:`<b>Pradeep</b> = Mini-Warehouse (MWH) — inventory limit <span class="hi">₹15 Lakh</span><br>
+    <b>Siddharth</b> = Level 1 franchise (L1)<br><br>
+    Pradeep ka main wallet <b>₹0.00</b> (default).`},
+
+{k:'Step 1', t:'Pradeep ne PURA ₹15 L ka maal utha liya', chain:['WH','MWH'], act:'MWH', flow:0, names:1,
+ s:{limit:1500000, stock:1500000, main:0, comm:0, retail:0}, chg:['stock','avail'], l1:{stock:0},
+ b:`Pradeep ne apni <b>poori limit</b> ka maal utha liya:<br><br>
+    • Stock = <span class="hi">₹15 L</span><br>
+    • Available limit = <b>₹0</b> (khatam)<br>
+    • Main wallet = <b>₹0</b> — <b>₹15 L ka udhaar</b> maal liya hai
+    <div class="box rule"><span class="l">Note</span>Abhi tak koi paisa nahi diya — pura udhaar.</div>`},
+
+{k:'Step 2', t:'Pradeep → Siddharth ko ₹1 L ka maal', chain:['MWH','L1'], act:'MWH', flow:0, names:1,
+ s:{limit:1500000, stock:1400000, main:0, comm:15, retail:0}, chg:['stock','avail','comm'], l1:{stock:100000}, whGain:15,
+ b:`Pradeep ne <b>Siddharth (L1)</b> ko <b>₹1 Lakh</b> ka maal becha — ye <b>franchise sale</b> hai.<br><br>
+    • Pradeep ka stock <b>₹14 L</b> bacha → <b>available limit ₹1 L</b> khul gayi (ab ₹1 L ka aur maal utha sakta)<br>
+    • <b>Main wallet: koi change nahi</b> ✋ (beech me paisa nahi chalta)<br>
+    • Pradeep ka commission = margin ₹30 → <b>₹15 uska, ₹15 WH ka</b><br>
+    • Siddharth ke paas ab <b>₹1 L ka stock</b>`},
+
+{k:'Step 3', t:'Siddharth ne ₹50,000 CUSTOMER ko becha', chain:['L1','Customer'], act:'L1', flow:0, names:1,
+ s:{limit:1500000, stock:1400000, main:0, comm:15, retail:0}, chg:[], l1:{stock:50000, main:-50000, comm:1}, whGain:15,
+ b:`Ab <b>Siddharth (L1)</b> ne ₹50,000 ka maal <b>customer</b> ko becha:<br><br>
+    • <b>Siddharth ka main wallet = <span class="neg">−₹50,000</span></b><br>
+    • Ye paisa <b>seedha WH (company) ko dena hai</b> — <b>Pradeep ko nahi</b> ❗<br>
+    • Siddharth ko uska <b>commission</b> mila (margin ka 50%, baaki 50% company ka)<br>
+    • <b>Pradeep ke wallets pe koi asar nahi</b> — uska commission pehle hi mil chuka (jab usne Siddharth ko becha)
+    <div class="box rule"><span class="l">Yaad rakho</span>Har level ko apna commission <b>usi waqt</b> milta hai jab wo aage bechta hai.<br>Aur <b>paisa hamesha WH ko</b> — franchise aapas me paisa nahi dete.</div>`},
+
+{k:'Result', t:'Pradeep ab ₹1 Lakh ka aur maal utha sakta', chain:['WH','MWH'], act:'MWH', names:1,
+ s:{limit:1500000, stock:1400000, main:0, comm:15, retail:0}, chg:['avail'], l1:{stock:50000, main:-50000, comm:1}, showF:true,
+ b:`Pradeep ka ₹1 Lakh ka stock nikal gaya (Siddharth ko chala gaya) →<br><br>
+    <b>Available = ₹15 L − ₹14 L = <span class="hi">₹1 Lakh</span></b><br><br>
+    Ab wo <b>₹1 Lakh ka aur maal</b> udhaar pe utha sakta hai.
+    <div class="box rule"><span class="l">Formula</span>Available = <b>(Limit − Stock) + Main Wallet</b> (positive ho to)</div>`},
+];
+
+/* ---------- SCENARIO D : L2 Fund → Stock → Bill (generic) ---------- */
+const D = [
+{k:'Default', t:'L2 / L3 — PREPAID, sab ₹0, koi credit limit nahi',
+ chain:[{label:'🏪 L2 / L3 Franchise',cls:'l2',act:true}],
+ cards:[
+   {cls:'main',lbl:'💳 Main Balance',val:'₹0',note:'default'},
+   {cls:'wallet',lbl:'👛 Wallet Balance',val:'₹0',note:'recharge se aata'},
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹0',note:'maal'},
+ ],
+ b:`<b>L2 aur L3 dono PREPAID hain</b> — shuru me main balance <b>₹0</b>, wallet <b>₹0</b>, aur <b>koi credit limit nahi</b>.<br><br>
+    Inka funda seedha hai — pehle <b>wallet me paisa daalo (recharge)</b>, phir <b>maal (stock)</b>. <b>Udhaar bilkul nahi milta.</b>
+    <div class="box rule"><span class="l">Rule</span>L2 / L3 = <b>PREPAID</b>. Bina paise ke maal nahi. (L1 iska ulta hai — wo <b>POSTPAID</b> hai, credit limit pe chalta hai.)</div>`},
+
+{k:'Fund Request', t:'₹3 Lakh ki fund request — approve hui',
+ chain:[{label:'🏪 L2',cls:'l2'},{label:'✔ L1 / MWH',cls:'l1',act:true}],
+ cards:[
+   {cls:'wallet',lbl:'👛 Wallet Balance',val:'₹3 L',note:'fund approve hua',chg:true},
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹0'},
+   {cls:'main',lbl:'💳 Main Balance',val:'₹0'},
+ ],
+ b:`L2 ne <b>₹3,00,000</b> ki <b>fund request</b> lagai.<br><br>
+    Ye request sirf <b>L1 ya MWH</b> approve kar sakte hain.<br>
+    Approve hote hi → <b>Wallet Balance = <span class="pos">₹3 L</span></b>.
+    <div class="box rule"><span class="l">Rule</span>Fund request <b>L1 / MWH</b> ko jaati. Approve → wallet me paisa.</div>`},
+
+{k:'Purchase Order', t:'₹3 L ka stock uthaya → wallet 0, stock ₹3 L',
+ chain:[{label:'🏪 L2',cls:'l2',act:true}],
+ cards:[
+   {cls:'wallet',lbl:'👛 Wallet Balance',val:'₹0',note:'stock me lag gaya',chg:true},
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹3 L',note:'ab maal paas',chg:true},
+   {cls:'comm',lbl:'🎁 Commission',val:'✓ generate',note:'stock-approve pe',chg:true,pill:'<span class="pill tr">ABHI</span>'},
+ ],
+ b:`L2 ne <b>₹3 Lakh</b> ka <b>purchase order (stock request)</b> lagaya.<br><br>
+    • Wallet balance <b>₹3 L → ₹0</b> (paisa stock me convert)<br>
+    • Stock <b>₹0 → ₹3 L</b><br>
+    • <b>L2 ka commission YAHI generate hota hai</b> — jaise hi stock approve hua, <b>usi waqt</b>.
+    <div class="box rule"><span class="l">Rule</span>L2 ka <b>commission stock-approve ke time</b> banta — billing pe nahi.</div>`},
+
+{k:'Billing', t:'Billing ka paisa wallet me JAMA — ye den-dari hai',
+ chain:[{label:'🏪 L2 / L3',cls:'l2',act:true},{label:'👤 Customer',cls:'cust'}], flow:0,
+ cards:[
+   {cls:'wallet',lbl:'👛 Wallet Balance',val:'₹1 L',note:'billing ka paisa jama',chg:true},
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹2 L',note:'3L − 1L becha',chg:true},
+   {cls:'comm',lbl:'🎁 Commission',val:'✓ bana',note:'adjust ho sakta'},
+ ],
+ b:`L2/L3 ne <b>₹1,00,000</b> ka maal customer ko becha:<br><br>
+    • <b>Stock ghatta</b>: ₹3 L − ₹1 L = <span class="hi">₹2,00,000</span><br>
+    • <b>Billing ka paisa wallet me jama</b> ho gaya — ₹1 L<br>
+    • Ye paisa unka apna nahi — <b>ye den-dari hai</b>, upar (MWH / WH) ko dena hai
+    <div class="box warn"><span class="l">Sabse bada point</span>L2/L3 me billing ka paisa <b>wallet me jama hota hai</b> aur wahi unki <b>den-dari</b> hai. Commission usi me <b>adjust</b> ho jaata hai.</div>`},
+
+{k:'Commission Adjust', t:'₹2 L recharge ka pura example',
+ chain:[{label:'🏪 L2 / L3',cls:'l2',act:true}],
+ cards:[
+   {cls:'wallet',lbl:'👛 Wallet',val:'₹1 L',note:'billing se jama'},
+   {cls:'comm',lbl:'🎁 Commission',val:'₹50,000',note:'₹1 L sale pe',chg:true},
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹1 L',note:'bacha hua maal'},
+ ],
+ b:`Client ka apna example:<br><br>
+    • Wallet me <b>₹2,00,000</b> daala → <b>recharge</b> ho gaya<br>
+    • Us ₹2 L me se <b>₹1,00,000</b> ka maal becha<br>
+    • Us sale pe <b>₹50,000 ka commission</b> ban gaya<br>
+    • Commission <b>commission wallet</b> me aa gaya — aage main wallet me adjust ho sakta hai
+    <div class="box rule"><span class="l">Rule</span>Commission <b>den-dari me adjust</b> ho jaata hai — alag se cash nahi milta.</div>`},
+
+{k:'Wallet→Wallet', t:'Paisa upar kaise jaata — wallet to wallet',
+ chain:[{label:'🏪 L2 / L3',cls:'l2'},{label:'🏬 MWH / WH',cls:'mwh',act:true}], flow:0,
+ cards:[
+   {cls:'wallet',lbl:'👛 L2/L3 Wallet',val:'ghatta',note:'den-dari chukai',chg:true},
+   {cls:'main',lbl:'🏬 MWH / WH',val:'badha',note:'paisa mila',chg:true},
+ ],
+ b:`Jab L2/L3 ko <b>MWH ya WH</b> ko paisa dena hota hai:<br><br>
+    • Ye <b>wallet-to-wallet transfer</b> se jaata hai<br>
+    • Cash haath se nahi chalta — sab system ke andar<br>
+    • Commission wallet ka paisa bhi isi me adjust ho jaata hai
+    <div class="box rule"><span class="l">Rule</span>Upar paisa dena = <b>wallet to wallet transfer</b>. Har transfer ka record rehta hai.</div>`},
+];
+
+/* ---------- SCENARIO E : Limits & 50-50 (generic) ---------- */
+const E = [
+{k:'Do Model', t:'Sabse bada farq — L1 POSTPAID, L2/L3 PREPAID',
+ chain:[{label:'🏪 L1 · postpaid',cls:'l1',act:true},{label:'🏪 L2 / L3 · prepaid',cls:'l2'}],
+ cards:[
+   {cls:'limit',lbl:'🏪 L1 — POSTPAID',val:'Maal pehle',note:'paisa baad me'},
+   {cls:'wallet',lbl:'🏪 L2 / L3 — PREPAID',val:'Paisa pehle',note:'maal baad me'},
+ ],
+ b:`Ye poore billing module ka <b>sabse bada rule</b> hai — <b>L1 ka flow aur L2/L3 ka flow bilkul alag hai</b>.<br><br>
+    • <b>L1 = POSTPAID</b> — fix limit milti hai, us tak <b>bina paisa diye maal</b> utha sakta. Payment baad me.<br>
+    • <b>L2 / L3 = PREPAID</b> — pehle <b>wallet recharge</b>, phir maal. Udhaar nahi.
+    <div class="box warn"><span class="l">Dhyan</span>Ye do flow <b>kabhi mix nahi</b> hote. Ek hi screen pe dono ka behaviour alag hoga.</div>`},
+
+{k:'L1 Postpaid', t:'L1 — fix credit limit (example ₹15 Lakh)',
+ chain:[{label:'🏪 L1',cls:'l1',act:true}],
+ cards:[
+   {cls:'limit',lbl:'⛔ Credit Limit',val:'₹15 L',note:'admin set karta'},
+   {cls:'main n',lbl:'💳 Main Wallet',val:'− ja sakta',note:'udhaar allowed'},
+ ],
+ b:`<b>L1 ko ek fix limit</b> milti hai — example <b>₹15,00,000</b>.<br><br>
+    • Us limit tak wo <b>bina paisa diye maal utha sakta</b> hai<br>
+    • Limit khatam → aage maal nahi, <b>pehle payment</b> karni padegi<br>
+    • Limit Admin set karta hai, har L1 ke liye alag ho sakti hai
+    <div class="box rule"><span class="l">Rule</span>L1 = <b>POSTPAID</b>. Credit limit tak udhaar maal, uske aage payment.</div>`},
+
+{k:'Stock Limit', t:'L2 / L3 — STOCK limit (billing rok deti)',
+ chain:[{label:'🏪 L2 / L3',cls:'l2',act:true}],
+ cards:[
+   {cls:'stock',lbl:'🏷️ Stock',val:'₹1 L',note:'limit pe pahuncha',chg:true},
+   {cls:'slimit',lbl:'⛔ Stock Limit',val:'₹1 L',note:'₹3L franchise pe set'},
+ ],
+ b:`<b>L2 aur L3</b> ke liye <b>stock limit</b> lagti hai (credit limit nahi — wo sirf L1 ko milti hai).<br><br>
+    Example: ₹3 Lakh ki franchise pe humne <b>₹1 Lakh</b> ki stock limit lagai.<br>
+    Jaise hi stock <b>₹1 L se neeche</b> jaayega → <b>billing ruk jaayegi</b> (jab tak dobara stock na uthaye).
+    <div class="box warn"><span class="l">Rule</span>Stock &lt; stock-limit → <b>billing STOP</b>. Neeche wale ki suraksha ke liye.</div>`},
+
+{k:'50-50 Matrix', t:'50-50 kab hota hai, kab nahi',
+ chain:[{label:'🏬 MWH',cls:'mwh'},{label:'🏪 L1',cls:'l1'},{label:'🏪 L2/L3',cls:'l2'},{label:'👤 Customer',cls:'cust'}],
+ cards:[],
+ b:`<b>50-50 (margin ka aadha company ko) sirf customer-sale pe:</b><br><br>
+    • <b>MWH → L1 / L2 / L3 / customer</b> → hamesha <span class="pos">50-50</span> ✅<br>
+    • <b>L1 → customer</b> → <span class="pos">50-50</span> ✅<br>
+    • <b>L1 → L2</b> ya <b>L1 → L3</b> → <span class="neg">50-50 NAHI</span> ❌ — ye <b>commission ladder</b> (product module) se
+    <div class="box rule"><span class="l">Rule</span><b>Customer</b> ko becho = 50-50. <b>Chain me neeche</b> (L1→L2 ya L1→L3) = ladder commission, 50-50 nahi.</div>
+    <div class="box warn"><span class="l">Naya structure</span>L2 aur L3 ab dono <b>seedha L1 ke neeche</b> hain — ek doosre ke neeche nahi. Isliye <b>L2 → L3</b> jaisi koi sale hoti hi nahi.</div>`},
+];
+
+/* ---------- RULES TAB ---------- */
+const RULES = `
+<div class="rules">
+  <h3>💳 4 Cheezein</h3>
+  <table>
+    <tr><th>Naam</th><th>Kya hai</th><th>Kya kar sakte</th></tr>
+    <tr><td><b>Inventory Limit</b></td><td><b>Udhaari ki limit</b> — itne ka maal bina paisa diye utha sakta</td><td>Admin set karta</td></tr>
+    <tr><td><b>Main Wallet</b></td><td>Default ₹0.00 · <b>Customer sale pe MINUS</b> (WH ko dena hai)</td><td>Fund request + commission transfer se badhta</td></tr>
+    <tr><td><b>Commission Wallet</b></td><td>Margin ka <b>50%</b> (baaki 50% WH ka)</td><td>✅ <b>Button dabake Main Wallet me transfer</b></td></tr>
+    <tr><td><b>Retail Profit Wallet</b></td><td>Standard price se <b>upar</b> becha → extra profit</td><td>❌ Sirf <b>dikhega</b> — kuch nahi kar sakta</td></tr>
+  </table>
+
+  <h3>📜 Rules</h3>
+  <table>
+    <tr><th>#</th><th>Action</th><th>Stock</th><th>Main Wallet</th><th>Commission</th></tr>
+    <tr><td>1</td><td><b>Stock uthana</b> (WH se)</td><td>↑ badhta</td><td><b>koi change nahi</b> (udhaar)</td><td>—</td></tr>
+    <tr><td>2</td><td><b>Customer sale</b></td><td>↓ ghatta</td><td><b>MINUS</b> (sale value)</td><td>margin ka 50% milta</td></tr>
+    <tr><td>3</td><td><b>Franchise sale</b> (MWH→L1)</td><td>↓ (L1 ka ↑)</td><td><b>koi change nahi</b> ✋</td><td>margin ka 50% milta</td></tr>
+    <tr><td>4</td><td><b>Commission transfer</b></td><td>—</td><td>↑ badhta</td><td>0 ho jaata</td></tr>
+    <tr><td>5</td><td><b>Fund Request</b> (advance)</td><td>—</td><td>↑ badhta</td><td>—</td></tr>
+  </table>
+
+  <h3>🧮 Formulas</h3>
+  <div class="formula">
+    <b>Commission</b>  = (jitne me becha − apni price) × 50%   &nbsp;&nbsp;<span style="color:#94a3b8">(baaki 50% company/WH ko)</span><br><br>
+    <b>Retail Profit</b> = (customer se liya − standard DP)   &nbsp;&nbsp;<span style="color:#94a3b8">(100% apna, par sirf view)</span><br><br>
+    <b>Available Limit</b> = Inventory Limit − Current Stock + Main Wallet<br>
+    <span style="color:#94a3b8">&nbsp;&nbsp;&nbsp;&nbsp;(Main wallet PLUS ho to badhta · MINUS (udhaar) ho to GHATTA hai)</span>
+  </div>
+
+  <h3>💡 3 Sabse bade point</h3>
+  <div class="box rule" style="max-width:none"><span class="l">1 · Paisa hamesha WH ko</span>
+    <b>Franchise aapas me paisa nahi dete.</b> L1 ka main wallet minus ho to wo paisa <b>seedha WH (company) ko</b> jaata hai — MWH ko nahi. Har franchise ka hisaab seedha company se hota hai.
+  </div>
+  <div class="box rule" style="max-width:none"><span class="l">2 · Franchise sale me cash nahi chalta</span>
+    WH → MWH → L1 → (L2 / L3) me sirf <b>maal (stock)</b> aage jaata hai. Beech me <b>cash haath se nahi</b> chalta —
+    jab paisa dena hota hai to <b>wallet-to-wallet transfer</b> hota hai.
+  </div>
+  <div class="box rule" style="max-width:none"><span class="l">3 · Commission apne bechne pe</span>
+    Har level ko commission <b>usi waqt</b> milta hai jab <b>wo khud aage bechta</b> hai (chahe franchise ko ya customer ko) — 50% uska, 50% company ka.<br><br>
+    Agar <b>L1 seedha customer</b> ko beche → L1 ko uska fix commission, baaki paisa <b>company ko</b> — <b>MWH ko kuch nahi</b> (uska commission pehle hi mil chuka jab usne L1 ko becha).
+  </div>
+
+  <h3>🆕 POSTPAID vs PREPAID — naya confirm hua</h3>
+  <table>
+    <tr><th>Cheez</th><th>L1 (POSTPAID)</th><th>L2 / L3 (PREPAID)</th></tr>
+    <tr><td><b>Model</b></td><td>Maal pehle, <b>paisa baad me</b></td><td><b>Paisa pehle</b>, maal baad me</td></tr>
+    <tr><td><b>Limit</b></td><td><b>Credit limit</b> — <b>per franchise</b>, Admin har L1 ke liye alag set karta (example ₹15 Lakh)</td><td>Credit limit <b>nahi</b> — sirf <b>stock limit</b></td></tr>
+    <tr><td><b>Wallet kaise bharta</b></td><td>Payment karke (credit limit khaali hoti hai)</td><td><b>Recharge</b> se — pehle paisa daalna padta</td></tr>
+    <tr><td><b>Billing ka wallet pe asar</b></td><td>L1 <b>real money pehle deta hi nahi</b> — wallet minus/plus hota rehta hai, jaise pehle</td><td>Billing ka paisa <b>wallet me jama</b> — ye <b>den-dari</b> hai</td></tr>
+    <tr><td><b>Commission</b></td><td>Margin ka 50%</td><td>Margin ka 50% — <b>den-dari me adjust</b> ho jaata</td></tr>
+    <tr><td><b>Upar paisa kaise dete</b></td><td colspan="2"><b>Wallet-to-wallet transfer</b> (MWH ya WH ko) — cash nahi</td></tr>
+    <tr><td><b>Fund request approve kaun</b></td><td colspan="2"><b>L1 · MWH</b> (bina paise ke maal nahi)</td></tr>
+    <tr><td><b>Commission kab banta</b></td><td colspan="2"><b>Stock approve hote hi</b></td></tr>
+  </table>
+
+  <h3>💰 50-50 aur nayi structure</h3>
+  <table>
+    <tr><th>Cheez</th><th>Rule</th></tr>
+    <tr><td><b>Structure</b></td><td>WH → MWH (optional) → L1 → <b>L2 aur L3 dono seedha L1 ke neeche</b></td></tr>
+    <tr><td><b>L2 → L3 sale</b></td><td><b>Hoti hi nahi</b> — dono L1 ke neeche alag branch hain</td></tr>
+    <tr><td><b>L1 → L2 / L1 → L3 billing</b></td><td><b>50-50 NAHI</b> — commission ladder se</td></tr>
+    <tr><td><b>MWH→(L1/L2/L3/cust), L1→cust</b></td><td><b>50-50</b> hamesha</td></tr>
+    <tr><td><b>Price / commission fix?</b></td><td><b>Nahi</b> — har <b>product</b> pe har level ka rate Admin set karta hai</td></tr>
+    <tr><td><b>Billing pe cost price</b></td><td><b>Customize ho sakti</b> — bill usi cost pe banega</td></tr>
+    <tr><td><b>L1 Special / koi special</b></td><td><b>Hata diya gaya</b> — sirf normal L1, L2, L3</td></tr>
+  </table>
+
+  <h3>✅ Pehle confirm ho chuka</h3>
+  <table>
+    <tr><th>Sawaal</th><th>Jawab</th></tr>
+    <tr><td>Negative main wallet limit se katega?</td><td><b>HAAN</b> — udhaar bhi limit se minus hota hai</td></tr>
+    <tr><td>Commission 50/50 har jagah?</td><td><b>Customer sale pe</b> — 50% seller, 50% company. Chain (L1→L2) me ladder</td></tr>
+    <tr><td>Customer sale pe main wallet kitna minus?</td><td><b>Sale value (DP)</b> jitna</td></tr>
+    <tr><td>L1 ka minus paisa kisko dena?</td><td><b>WH (company) ko</b> — MWH ko nahi</td></tr>
+  </table>
+
+  <h3>⏳ Abhi bhi baaki</h3>
+  <div class="q"><b>Aage ye define karna hai:</b><br>
+    • User Module (binary tree) ka commission/payout billing se kaise judega<br>
+    • Fund request reject hone pe kya<br>
+    • Settlement / payout — commission wallet se bank me paisa kab<br>
+    • Stock return / cancel hone pe kya<br>
+    • Minus-limit aur stock-limit ki value kaun set kare (admin?)</div>
+</div>`;
+
+/* ---------- ENGINE ---------- */
+const SC = {A, B, C, D, E};
+const GEN = {D:1, E:1};   // generic-render scenarios
+let cur='A', i=0, playing=false, timer=null, prev=null;
+
+const stage=document.getElementById('stage'), side=document.getElementById('side');
+
+function card(cls, lbl, val, note, chg, pill){
+  return `<div class="card ${cls} ${chg?'chg':''}">${pill||''}
+    <div class="lbl">${lbl}</div><div class="val">${val}</div>${note?`<div class="note">${note}</div>`:''}</div>`;
+}
+function renderGeneric(){
+  const st=SC[cur][i];
+  let ch='<div class="chain">';
+  (st.chain||[]).forEach((nd,idx)=>{
+    ch += `<span class="node ${nd.cls} ${nd.act?'act':''}">${nd.label}</span>`;
+    if(idx<st.chain.length-1) ch += `<span class="arw ${st.flow===idx?'flow':''}">──▶</span>`;
+  });
+  ch+='</div>';
+  let cards='';
+  const cs=st.cards||[];
+  for(let k=0;k<cs.length;k+=3){
+    cards+='<div class="grid">';
+    cs.slice(k,k+3).forEach(c=> cards+=card(c.cls,c.lbl,c.val,c.note,c.chg,c.pill));
+    cards+='</div>';
+  }
+  stage.innerHTML = ch + cards;
+  document.getElementById('kick').textContent = st.k;
+  document.getElementById('title').innerHTML = st.t;
+  document.getElementById('body').innerHTML = st.b;
+  const n=SC[cur].length;
+  document.getElementById('cnt').textContent = (i+1)+' / '+n;
+  document.getElementById('bar').style.width = ((i+1)/n*100)+'%';
+  document.getElementById('back').disabled = i<=0;
+  document.getElementById('next').disabled = i>=n-1;
+}
+function render(){
+  if(cur==='R'){ stage.innerHTML=RULES; side.style.display='none'; document.querySelector('footer').style.display='none'; return; }
+  side.style.display=''; document.querySelector('footer').style.display='flex';
+  if(GEN[cur]){ return renderGeneric(); }
+  const st=SC[cur][i], s=st.s;
+  const avail = (s.limit - s.stock) + s.main;   // negative main wallet bhi count hota hai
+  const chg = st.chg||[];
+  const nm = st.names;
+
+  // chain
+  const order=['WH','MWH','L1','Customer'];
+  const shown = st.chain||['WH','MWH','L1','Customer'];
+  let ch='<div class="chain">';
+  shown.forEach((n,idx)=>{
+    const cls = n==='WH'?'wh':n==='MWH'?'mwh':n==='L1'?'l1':'cust';
+    const lab = n==='MWH'&&nm?'🏬 Pradeep (MWH)' : n==='L1'&&nm?'🏪 Siddharth (L1)' :
+                n==='WH'?'🏭 Warehouse' : n==='MWH'?'🏬 Mini-WH' : n==='L1'?'🏪 Level 1' : '👤 Customer';
+    ch += `<span class="node ${cls} ${st.act===n?'act':''}">${lab}</span>`;
+    if(idx<shown.length-1) ch += `<span class="arw ${st.flow===idx?'flow':''}">──▶</span>`;
+  });
+  ch+='</div>';
+
+  // prices
+  let pr='';
+  if(st.prices) pr = `<div class="whbox">
+     <div class="mini"><div class="l">DP · Customer price</div><div class="v">₹800</div></div>
+     <div class="mini"><div class="l">MWH price (FP)</div><div class="v">₹670</div></div>
+     <div class="mini"><div class="l">L1 price</div><div class="v">₹700</div></div>
+   </div>`;
+
+  // MWH wallets
+  const mainCls = s.main<0?'n':(s.main>0?'p':'');
+  let html = ch + pr +
+   `<div class="owner"><span class="badge">${nm?'PRADEEP':'MWH'}</span><span class="nm">Mini-Warehouse</span><span class="sub">${nm?'':'· stock + wallets'}</span></div>
+    <div class="grid">
+      ${card('limit','📦 Inventory Limit', L(s.limit), 'udhaari ki limit', chg.includes('limit'))}
+      ${card('stock','🏷️ Current Stock', L(s.stock), 'abhi paas me maal', chg.includes('stock'))}
+      ${card('avail','✅ Available Limit', L(avail), 'itna aur utha sakta', chg.includes('avail'))}
+    </div>
+    <div class="grid">
+      ${card('main '+mainCls,'💳 Main Wallet', inr(s.main), s.main<0?'WH ko dena hai':(s.main>0?'jama hai':'default'), chg.includes('main'))}
+      ${card('comm','🎁 Commission Wallet', inr(s.comm), 'margin ka 50%', chg.includes('comm'), '<span class="pill tr">TRANSFER ✓</span>')}
+      ${card('retail','📈 Retail Profit', inr(s.retail), 'extra profit', chg.includes('retail'), '<span class="pill ro">VIEW ONLY</span>')}
+    </div>`;
+
+  // L1 wallets (scenario B/C)
+  if(st.l1){
+    const l=st.l1, lm=l.main||0;
+    html += `<div class="second">
+      <div class="owner"><span class="badge">${nm?'SIDDHARTH':'L1'}</span><span class="nm">Level 1 Franchise</span></div>
+      <div class="grid">
+        ${card('stock','🏷️ Stock', l.stock>1?L(l.stock):(l.stock?'₹1 L':'₹0'), 'apni limit pe', false)}
+        ${card('main '+(lm<0?'n':''),'💳 Main Wallet', inr(lm), lm<0?'WH ko dena hai':'default', lm<0)}
+        ${card('comm','🎁 Commission', l.comm?'✓ mila':'₹0', 'apne margin ka 50%', !!l.comm)}
+      </div></div>`;
+  }
+
+  // WH gain
+  if(st.whGain) html += `<div class="whbox"><div class="mini whx"><div class="l">🏭 Warehouse ko gaya (50%)</div><div class="v">${inr(st.whGain)}</div></div></div>`;
+
+  if(st.showF) html += `<div class="formula"><b>Available</b> = Limit ${L(s.limit)} − Stock ${L(s.stock)} ${s.main<0?'− ':'+ '}Main Wallet ${inr(Math.abs(s.main))} = <b>${L(avail)}</b></div>`;
+
+  stage.innerHTML = html;
+  document.getElementById('kick').textContent = st.k;
+  document.getElementById('title').innerHTML = st.t;
+  document.getElementById('body').innerHTML = st.b;
+  const n=SC[cur].length;
+  document.getElementById('cnt').textContent = (i+1)+' / '+n;
+  document.getElementById('bar').style.width = ((i+1)/n*100)+'%';
+  document.getElementById('back').disabled = i<=0;
+  document.getElementById('next').disabled = i>=n-1;
+}
+function go(x){ if(cur==='R')return; const n=SC[cur].length; if(x<0||x>=n)return; i=x; render(); }
+function next(){ if(cur!=='R' && i<SC[cur].length-1) go(i+1); else stop(); }
+function back(){ if(cur!=='R' && i>0) go(i-1); }
+function stop(){ playing=false; clearTimeout(timer); document.getElementById('play').textContent='▶ Auto'; }
+function play(){ playing=true; document.getElementById('play').textContent='⏸ Pause';
+  if(i>=SC[cur].length-1) go(0);
+  const t=()=>{ if(!playing)return; if(i>=SC[cur].length-1){stop();return;} next(); timer=setTimeout(t,3600); };
+  timer=setTimeout(t,700); }
+document.getElementById('next').onclick=()=>{stop();next();};
+document.getElementById('back').onclick=()=>{stop();back();};
+document.getElementById('reset').onclick=()=>{stop();go(0);};
+document.getElementById('play').onclick=()=>{playing?stop():play();};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  stop(); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+  cur=t.dataset.s; i=0; render();});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){stop();next();}if(e.key==='ArrowLeft'){stop();back();}});
+render();
+</script>
+</body>
+</html>

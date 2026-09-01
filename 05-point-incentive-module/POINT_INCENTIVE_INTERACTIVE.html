@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Point &amp; Incentive Module — Interactive</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#131a2c;--panel2:#0f1626;--line:#243049;--line2:#2f3d5c;
+  --txt:#e9eefb;--txt2:#a3b1cc;--txt3:#6b7c9c;
+  --mother:#a855f7;--left:#22d3ee;--right:#f59e0b;--sel:#4ade80;--sponsor:#e879f9;
+  --self:#4ade80;--direct:#60a5fa;--tl:#22d3ee;--tr:#f59e0b;--bad:#f87171;
+  --shadow:0 10px 34px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;background:
+  radial-gradient(1000px 500px at 80% -10%,rgba(168,85,247,.10),transparent),
+  radial-gradient(900px 450px at 0% 0%,rgba(34,211,238,.08),transparent),var(--bg);
+  color:var(--txt);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+header{padding:11px 20px;background:rgba(19,26,44,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+header h1{margin:0;font-size:1rem;font-weight:800;color:#e6d5ff;white-space:nowrap;}
+.tabs{display:flex;gap:4px;background:var(--panel2);padding:4px;border-radius:11px;border:1px solid var(--line);flex-wrap:wrap;}
+.tab{border:none;background:transparent;color:var(--txt2);padding:7px 12px;border-radius:8px;font-weight:700;font-size:.79rem;cursor:pointer;white-space:nowrap;}
+.tab.on{background:var(--mother);color:#fff;}
+.grow{flex:1;}
+
+.wrap{flex:1;display:flex;min-height:0;}
+#stage{flex:1.7;min-width:0;overflow:hidden;position:relative;background:
+  linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px) 0 0/26px 26px,
+  linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px) 0 0/26px 26px;}
+#side{width:400px;flex-shrink:0;border-left:1px solid var(--line);padding:16px 18px;overflow:auto;background:rgba(15,22,38,.55);}
+#side.hide{display:none;}
+
+/* ---------- tree svg ---------- */
+#treeSvg{display:block;width:100%;height:100%;cursor:grab;}
+#treeSvg.drag{cursor:grabbing;}
+.link{stroke:var(--line2);stroke-width:2.5;fill:none;}
+.link.lft{stroke:rgba(34,211,238,.5);} .link.rgt{stroke:rgba(245,158,11,.45);}
+.link.spon{stroke:var(--sponsor);stroke-width:1.8;stroke-dasharray:6 5;opacity:.7;}
+.link.hot{stroke-width:5;}
+.nd{cursor:pointer;}
+.nd circle.body{stroke-width:3;transition:.25s;}
+.nd.m circle.body{fill:#2a1846;stroke:var(--mother);}
+.nd.l circle.body{fill:#0e2a33;stroke:var(--left);}
+.nd.r circle.body{fill:#33260c;stroke:var(--right);}
+.nd.sel circle.body{stroke:var(--sel);filter:drop-shadow(0 0 9px rgba(74,222,128,.75));}
+.nd.hit circle.body{stroke:#fff;stroke-width:5;filter:drop-shadow(0 0 18px rgba(255,255,255,.95));}
+.nd .lbl{fill:#fff;font-weight:800;font-size:15px;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.nd .tag{font-size:9px;fill:var(--txt3);font-weight:700;text-anchor:middle;pointer-events:none;}
+.nd .stat{font-size:10px;font-weight:800;text-anchor:middle;pointer-events:none;}
+.nd .stat.s{fill:var(--self);} .nd .stat.d{fill:var(--direct);}
+.nd .stat.l{fill:var(--tl);} .nd .stat.r{fill:var(--tr);}
+.ring-pulse{fill:none;stroke-width:3;opacity:0;}
+.nd.hit .ring-pulse{animation:pulseRing 1s ease-out;}
+@keyframes pulseRing{0%{r:24px;opacity:.9;}100%{r:56px;opacity:0;}}
+.floaty{font-weight:800;text-anchor:middle;pointer-events:none;animation:floatUp 1.6s ease-out forwards;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(8px) scale(.7)}15%{opacity:1;transform:translateY(0) scale(1.1)}30%{transform:scale(1)}100%{opacity:0;transform:translateY(-44px)}}
+
+/* ---------- DECK (non-tree tabs) ---------- */
+.deck{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:74px 26px 130px;}
+.scene{width:min(1020px,100%);max-height:100%;overflow:auto;scrollbar-width:none;}
+.scene::-webkit-scrollbar{display:none;}
+.scene h2{font-size:clamp(20px,2.4vw,30px);color:#e6d5ff;margin:0 0 6px;font-weight:800;letter-spacing:-.01em;}
+.scene .lead{color:var(--txt2);font-size:clamp(13px,1.15vw,16px);margin:0 0 16px;line-height:1.6;}
+@keyframes pop{from{transform:translateY(14px) scale(.97)}to{transform:none}}
+.scene>*{animation:pop .45s cubic-bezier(.2,.9,.3,1.3);}
+.scene>*:nth-child(2){animation-delay:.06s} .scene>*:nth-child(3){animation-delay:.12s}
+.scene>*:nth-child(4){animation-delay:.18s} .scene>*:nth-child(5){animation-delay:.24s}
+.scene>*:nth-child(6){animation-delay:.3s} .scene>*:nth-child(7){animation-delay:.36s}
+
+.big{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:8px 0;}
+.stat{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;
+  padding:16px 20px;min-width:150px;text-align:center;box-shadow:var(--shadow);flex:1;}
+.stat .k{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);}
+.stat .v{font-size:clamp(20px,2.6vw,34px);font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;line-height:1.1;}
+.stat .n{font-size:.72rem;color:var(--txt3);margin-top:3px;}
+.stat.gd{border-color:rgba(74,222,128,.5);} .stat.gd .v{color:#4ade80;}
+.stat.bd{border-color:rgba(248,113,113,.5);} .stat.bd .v{color:#f87171;}
+.stat.cy .v{color:#67e8f9;} .stat.am .v{color:#fcd34d;} .stat.pu .v{color:#c4b5fd;}
+.arrowrow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.arw2{color:var(--txt3);font-weight:800;font-size:1.1rem;}
+
+table.t{width:100%;border-collapse:collapse;font-size:clamp(11.5px,1.05vw,14px);margin:6px 0;}
+table.t th{background:var(--panel2);color:#c4b5fd;text-align:left;padding:8px 10px;border:1px solid var(--line2);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;}
+table.t td{padding:7px 10px;border:1px solid var(--line);color:var(--txt2);}
+table.t td b{color:#fff;}
+table.t tr.hl td{background:rgba(74,222,128,.13);}
+table.t tr.bad td{background:rgba(248,113,113,.10);}
+
+.note{border-radius:12px;padding:11px 15px;margin:10px 0;border-left:4px solid;font-size:clamp(12px,1.05vw,14.5px);line-height:1.6;}
+.note.ok{background:rgba(74,222,128,.1);border-color:#4ade80;}
+.note.ru{background:rgba(168,85,247,.1);border-color:var(--mother);}
+.note.wa{background:rgba(245,158,11,.1);border-color:#f59e0b;}
+.note.op{background:rgba(232,121,249,.1);border-color:var(--sponsor);}
+.note b{color:#fde68a;}
+.note .l{font-weight:800;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px;}
+.note.ok .l{color:#4ade80;} .note.ru .l{color:#c4b5fd;} .note.wa .l{color:#fcd34d;} .note.op .l{color:#f0abfc;}
+
+.ctl{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:8px 0;}
+.ctl .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px;}
+.ctl .row>div{flex:1;min-width:120px;}
+label.mini{font-size:.68rem;color:var(--txt3);font-weight:700;display:block;margin-bottom:3px;}
+.ctl input,.ctl select{width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:.88rem;font-weight:700;}
+.btns{display:flex;gap:8px;flex-wrap:wrap;}
+.btns button{flex:1;min-width:120px;border:none;border-radius:9px;padding:10px;font-weight:800;font-size:.82rem;cursor:pointer;}
+.bRun{background:linear-gradient(90deg,#2563eb,#60a5fa);color:#04121e;}
+.bNxt{background:linear-gradient(90deg,#0891b2,#22d3ee);color:#04121e;}
+.bWk{background:linear-gradient(90deg,#d97706,#f59e0b);color:#1a1200;}
+.bGr{background:#475569;color:#fff;}
+.seg{display:flex;gap:6px;}
+.seg button{flex:1;border:1px solid var(--line2);background:var(--panel);color:var(--txt2);border-radius:8px;padding:7px;font-weight:700;font-size:.76rem;cursor:pointer;}
+.seg button.on{background:var(--mother);border-color:var(--mother);color:#fff;}
+.mono{font-family:Consolas,monospace;font-size:.85rem;color:#a5f3fc;}
+
+/* ---------- shared chrome: step bar / zoom / robot ---------- */
+.stepbar{position:absolute;top:13px;left:13px;z-index:20;display:flex;gap:6px;align-items:center;
+  background:rgba(19,26,44,.92);backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:12px;padding:6px 8px;flex-wrap:wrap;max-width:calc(100% - 120px);}
+.stepbar button{border:none;border-radius:8px;padding:8px 12px;font-weight:800;font-size:.79rem;cursor:pointer;white-space:nowrap;}
+.stepbar button:disabled{opacity:.32;cursor:not-allowed;}
+.sPlay{background:linear-gradient(90deg,#16a34a,#4ade80);color:#04180a;}
+.sNext{background:linear-gradient(90deg,#0891b2,#22d3ee);color:#04121e;}
+.sPrev{background:var(--panel);color:var(--txt2);border:1px solid var(--line2)!important;}
+.sReplay{background:#475569;color:#fff;}
+.stepcount{font-size:.75rem;color:var(--txt3);font-weight:800;padding:0 5px;white-space:nowrap;}
+.pbar{height:5px;width:110px;background:var(--line);border-radius:4px;overflow:hidden;}
+.pbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a855f7,#22d3ee);transition:width .4s;}
+
+.zoombar{position:absolute;top:13px;right:13px;display:flex;flex-direction:column;gap:6px;z-index:20;}
+.zoombar button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);
+  background:rgba(19,26,44,.9);backdrop-filter:blur(8px);color:var(--txt);font-size:1rem;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;}
+.zoombar button:hover{border-color:var(--mother);color:#e6d5ff;}
+.zoombar .zlabel{font-size:.6rem;color:var(--txt3);text-align:center;}
+.zoombar .fit{font-size:.65rem;}
+
+.robot{position:absolute;left:16px;bottom:16px;z-index:30;display:flex;align-items:flex-end;gap:10px;pointer-events:none;max-width:min(620px,80%);}
+.bot{width:68px;height:68px;flex-shrink:0;animation:hover 2.6s ease-in-out infinite;}
+@keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.bot .pupil{fill:#22d3ee;animation:blink 3.4s infinite;}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.bot .glow{animation:botGlow 2.2s ease-in-out infinite;}
+@keyframes botGlow{0%,100%{opacity:.35}50%{opacity:.85}}
+.bubble{background:linear-gradient(160deg,rgba(23,32,54,.97),rgba(15,22,38,.97));border:1px solid var(--line2);
+  border-radius:16px 16px 16px 4px;padding:12px 16px;font-size:clamp(12.5px,1.05vw,15px);line-height:1.6;color:var(--txt);
+  box-shadow:0 12px 34px rgba(0,0,0,.55);min-height:42px;}
+.bubble b{color:#fde68a;}
+.bubble .k{font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c4b5fd;display:block;margin-bottom:3px;}
+.bubble .self{color:var(--self);font-weight:800;} .bubble .direct{color:var(--direct);font-weight:800;}
+.bubble .tl{color:var(--tl);font-weight:800;} .bubble .tr{color:var(--tr);font-weight:800;}
+.bubble .gd{color:#4ade80;font-weight:800;} .bubble .bd{color:#f87171;font-weight:800;}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--txt3);margin-right:3px;animation:dotb 1s infinite;}
+.dots span:nth-child(2){animation-delay:.15s} .dots span:nth-child(3){animation-delay:.3s}
+@keyframes dotb{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+
+/* ---------- side panel (flow tab only) ---------- */
+.kick{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd;font-weight:800;margin-bottom:7px;}
+.legend{display:flex;gap:9px;flex-wrap:wrap;font-size:.7rem;color:var(--txt3);margin-bottom:12px;}
+.legend b{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--txt2);}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.dot.self{background:var(--self);}.dot.direct{background:var(--direct);}.dot.tl{background:var(--tl);}.dot.tr{background:var(--tr);}.dot.spon{background:var(--sponsor);}
+.ctrlbox{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:12px;}
+.ctrlbox .h{font-size:.68rem;color:var(--txt3);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.ctrlbox .who{font-size:.98rem;font-weight:800;color:#fff;margin:8px 0;}
+.ctrlbox select,.ctrlbox input{width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:.85rem;font-weight:700;}
+button.buyBtn{border:none;border-radius:10px;padding:11px;font-weight:800;font-size:.85rem;cursor:pointer;width:100%;
+  background:linear-gradient(90deg,#16a34a,#4ade80);color:#04180a;}
+.tip{font-size:.78rem;color:var(--txt3);margin-top:8px;line-height:1.55;}
+.log{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:11px 13px;max-height:200px;overflow-y:auto;}
+.log .h{font-size:.68rem;color:var(--txt3);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.log .ln{font-size:.78rem;padding:5px 0;border-bottom:1px dashed var(--line);color:var(--txt2);font-family:Consolas,monospace;animation:logIn .35s ease;}
+@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.log .ln:last-child{border-bottom:none;}
+.log .ln b{color:#fff;}
+
+@media(max-width:1150px){.wrap{flex-direction:column;}#side{width:auto;border-left:none;border-top:1px solid var(--line);}
+  .robot{max-width:90%;} .bot{width:52px;height:52px;} .deck{padding:70px 14px 120px;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>💎 Point &amp; Incentive Module</h1>
+  <div class="tabs">
+    <button class="tab on" data-s="flow">🌳 Point Flow</button>
+    <button class="tab" data-s="bpi">💰 BPI Matching</button>
+    <button class="tab" data-s="cap">📊 Capping Levels</button>
+    <button class="tab" data-s="startup">🚀 Startup Incentive</button>
+    <button class="tab" data-s="mentor">🎓 Mentor's Incentive</button>
+    <button class="tab" data-s="achiever">🏆 Achievers</button>
+    <button class="tab" data-s="rules">📋 Rules &amp; Open Qs</button>
+  </div>
+  <div class="grow"></div>
+</header>
+
+<div class="wrap">
+  <div id="stage"></div>
+  <div id="side">
+    <div class="kick">Interactive Simulation</div>
+    <h2 style="font-size:1.15rem;margin:0 0 9px;color:#fff;">Purchase → Point Flow</h2>
+    <div class="legend">
+      <b><span class="dot self"></span>Self</b><b><span class="dot direct"></span>Direct</b>
+      <b><span class="dot tl"></span>Left team</b><b><span class="dot tr"></span>Right team</b>
+      <b><span class="dot spon"></span>Sponsor link</b>
+    </div>
+    <div class="ctrlbox">
+      <div class="h">Kaun kharid raha (buyer)</div>
+      <label class="mini">Buyer chuno (ya tree me node pe click karo)</label>
+      <select id="buyerSel"></select>
+      <div style="height:8px"></div>
+      <label class="mini">Iska sponsor (badal ke test kar sakte ho)</label>
+      <select id="sponsorSel"></select>
+      <div class="who" id="selWho">U8</div>
+      <label class="mini">Kitne PV ka product</label>
+      <input type="number" id="amt" value="1000" step="500" min="500">
+      <div style="height:9px"></div>
+      <button class="buyBtn" id="buyBtn">🛒 Purchase chalao (step-by-step)</button>
+      <div class="tip" id="selTip"></div>
+    </div>
+    <div class="log">
+      <div class="h">Live ledger (audit history)</div>
+      <div id="logList"><div class="ln">Node chuno → purchase chalao.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   SHARED HELPERS
+   ======================================================================= */
+const fmt=n=>Math.round(n).toLocaleString('en-IN');
+const $=id=>document.getElementById(id);
+
+/* ---------- robot ---------- */
+let sayTimer=null,lastSay=null;
+function say(kicker,html){
+  lastSay={kicker,html};
+  const b=$('bubble'); if(!b) return;
+  clearTimeout(sayTimer);
+  b.innerHTML=`<span class="k">${kicker}</span><span class="dots"><span></span><span></span><span></span></span>`;
+  sayTimer=setTimeout(()=>{ const bb=$('bubble'); if(bb) bb.innerHTML=`<span class="k">${kicker}</span>${html}`; },320);
+}
+const ROBOT_SVG=`<div class="robot">
+  <svg class="bot" viewBox="0 0 100 100">
+    <ellipse class="glow" cx="50" cy="54" rx="40" ry="34" fill="#22d3ee" opacity=".3"/>
+    <line x1="50" y1="12" x2="50" y2="24" stroke="#a855f7" stroke-width="3"/><circle cx="50" cy="10" r="5" fill="#e879f9"/>
+    <rect x="20" y="26" width="60" height="48" rx="16" fill="#1b2540" stroke="#3b82f6" stroke-width="3"/>
+    <ellipse cx="38" cy="48" rx="9" ry="10" fill="#0b1020"/><ellipse cx="62" cy="48" rx="9" ry="10" fill="#0b1020"/>
+    <circle class="pupil" cx="38" cy="48" r="4"/><circle class="pupil" cx="62" cy="48" r="4"/>
+    <rect x="40" y="62" width="20" height="4" rx="2" fill="#22d3ee" opacity=".8"/>
+    <rect x="12" y="42" width="7" height="18" rx="3" fill="#3b82f6"/><rect x="81" y="42" width="7" height="18" rx="3" fill="#3b82f6"/>
+  </svg><div class="bubble" id="bubble"></div></div>`;
+const STEPBAR=`<div class="stepbar">
+  <button class="sPrev" id="sPrev">◀</button>
+  <button class="sPlay" id="sPlay">▶ Auto play</button>
+  <button class="sNext" id="sNext">Next ▶</button>
+  <button class="sReplay" id="sReplay">↻</button>
+  <span class="stepcount" id="stepCount">— / —</span>
+  <div class="pbar"><i id="pbarI"></i></div></div>`;
+
+/* =======================================================================
+   TREE DATA (Point Flow tab)
+   ======================================================================= */
+const nodes={
+  1:{id:1,left:2,right:3,parent:null,side:'root',sponsor:null},
+  2:{id:2,left:4,right:5,parent:1,side:'left',sponsor:1},
+  3:{id:3,left:null,right:13,parent:1,side:'right',sponsor:1},
+  4:{id:4,left:6,right:7,parent:2,side:'left',sponsor:2},
+  5:{id:5,left:12,right:null,parent:2,side:'right',sponsor:2},
+  6:{id:6,left:8,right:9,parent:4,side:'left',sponsor:4},
+  7:{id:7,left:10,right:11,parent:4,side:'right',sponsor:4},
+  8:{id:8,left:null,right:null,parent:6,side:'left',sponsor:1},
+  9:{id:9,left:null,right:null,parent:6,side:'right',sponsor:6},
+  10:{id:10,left:null,right:null,parent:7,side:'left',sponsor:7},
+  11:{id:11,left:null,right:null,parent:7,side:'right',sponsor:7},
+  12:{id:12,left:null,right:null,parent:5,side:'left',sponsor:5},
+  13:{id:13,left:null,right:null,parent:3,side:'right',sponsor:3},
+};
+Object.values(nodes).forEach(n=>{n.self=0;n.direct=0;n.teamL=0;n.teamR=0;});
+let selId=8;
+const labelOf=id=>id===1?'M':('U'+id);
+
+const RX=160,RY=118,R=24;
+let POS={},WORLD={w:1000,h:600},X,Y;
+function layout(){
+  POS={};let col=0,maxD=0;
+  (function walk(id,d){const n=nodes[id];if(n.left)walk(n.left,d+1);POS[id]={col:col++,d};maxD=Math.max(maxD,d);if(n.right)walk(n.right,d+1);})(1,0);
+  for(const id in POS){POS[id].x=60+POS[id].col*RX;POS[id].y=70+POS[id].d*RY;}
+  WORLD={w:60+col*RX+60,h:70+(maxD+1)*RY+40};
+  X=id=>POS[id].x; Y=id=>POS[id].y;
+}
+let cam={x:0,y:0,w:1000,h:600},camAnim=null;
+function stageSize(){const s=$('stage');return{w:s.clientWidth||900,h:s.clientHeight||600};}
+function applyCam(){const svg=$('treeSvg');if(!svg)return;svg.setAttribute('viewBox',`${cam.x} ${cam.y} ${cam.w} ${cam.h}`);
+  const z=$('zPct'); if(z) z.textContent=Math.round((stageSize().w/cam.w)*100)+'%';}
+function setCam(t,animate){
+  if(camAnim){clearInterval(camAnim);camAnim=null;}
+  if(!animate){cam={...t};applyCam();return;}
+  const from={...cam},t0=Date.now(),dur=620,ease=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+  camAnim=setInterval(()=>{const p=Math.min(1,(Date.now()-t0)/dur),e=ease(p);
+    cam={x:from.x+(t.x-from.x)*e,y:from.y+(t.y-from.y)*e,w:from.w+(t.w-from.w)*e,h:from.h+(t.h-from.h)*e};
+    applyCam(); if(p>=1){clearInterval(camAnim);camAnim=null;}},16);
+}
+function fitView(a){const s=stageSize(),ar=s.w/s.h;let w=WORLD.w+80,h=WORLD.h+80;
+  if(w/h>ar)h=w/ar;else w=h*ar; setCam({x:WORLD.w/2-w/2,y:WORLD.h/2-h/2,w,h},a);}
+function zoomBy(f){const cx=cam.x+cam.w/2,cy=cam.y+cam.h/2,s=stageSize();
+  let w=Math.max(s.w/3.2,Math.min(WORLD.w*2.2,cam.w*f)),h=w*(cam.h/cam.w);
+  setCam({x:cx-w/2,y:cy-h/2,w,h},true);}
+function focusNode(id,tight){const s=stageSize(),ar=s.w/s.h;let w=tight?RX*4.6:cam.w,h=w/ar;
+  if(tight&&h<RY*3){h=RY*3;w=h*ar;} setCam({x:X(id)-w/2,y:Y(id)-h/2+RY*.12,w,h},true);}
+function focusPair(a,b){const s=stageSize(),ar=s.w/s.h;
+  const mnX=Math.min(X(a),X(b))-RX*.9,mxX=Math.max(X(a),X(b))+RX*.9;
+  const mnY=Math.min(Y(a),Y(b))-RY*.9,mxY=Math.max(Y(a),Y(b))+RY*.9;
+  let w=mxX-mnX,h=mxY-mnY; if(w/h>ar)h=w/ar;else w=h*ar;
+  setCam({x:(mnX+mxX)/2-w/2,y:(mnY+mxY)/2-h/2,w,h},true);}
+
+function renderTree(keepCam){
+  layout();
+  let links='',spon='',nds='';
+  for(const id in nodes){const n=nodes[id];
+    ['left','right'].forEach(side=>{if(n[side]){const c=n[side],cls=side==='left'?'lft':'rgt';
+      links+=`<path id="lk-${id}-${c}" class="link ${cls}" d="M${X(id)} ${Y(id)+R} C ${X(id)} ${Y(id)+RY/2}, ${X(c)} ${Y(c)-RY/2}, ${X(c)} ${Y(c)-R}"/>`;}});
+    if(n.sponsor&&n.sponsor!==n.parent)
+      spon+=`<path id="sp-${id}" class="link spon" d="M${X(id)} ${Y(id)} Q ${(X(id)+X(n.sponsor))/2} ${Math.min(Y(id),Y(n.sponsor))-70}, ${X(n.sponsor)} ${Y(n.sponsor)}"/>`;
+  }
+  for(const id in nodes){const n=nodes[id];
+    const cls=n.side==='root'?'m':n.side==='left'?'l':'r';
+    const ring=n.side==='root'?'#a855f7':n.side==='left'?'#22d3ee':'#f59e0b';
+    nds+=`<g class="nd ${cls} ${+id===selId?'sel':''}" id="nd-${id}" onclick="pick(${id})">
+      <circle class="ring-pulse" cx="${X(id)}" cy="${Y(id)}" r="24" stroke="${ring}"/>
+      <circle class="body" cx="${X(id)}" cy="${Y(id)}" r="${R}"/>
+      <text class="lbl" x="${X(id)}" y="${Y(id)}">${labelOf(+id)}</text>
+      <text class="tag" x="${X(id)}" y="${Y(id)-R-9}">${n.side==='root'?'MOTHER':'ID '+n.id}</text>
+      <text class="stat s" id="st-s-${id}" x="${X(id)-26}" y="${Y(id)+R+14}">S ${fmt(n.self)}</text>
+      <text class="stat d" id="st-d-${id}" x="${X(id)+26}" y="${Y(id)+R+14}">D ${fmt(n.direct)}</text>
+      <text class="stat l" id="st-l-${id}" x="${X(id)-26}" y="${Y(id)+R+27}">L ${fmt(n.teamL)}</text>
+      <text class="stat r" id="st-r-${id}" x="${X(id)+26}" y="${Y(id)+R+27}">R ${fmt(n.teamR)}</text></g>`;
+  }
+  $('stage').innerHTML=`<svg id="treeSvg" xmlns="http://www.w3.org/2000/svg"><g>${links}${spon}${nds}</g><g id="fx"></g></svg>
+    ${STEPBAR}
+    <div class="zoombar"><button id="zIn">＋</button><button id="zOut">−</button><button class="fit" id="zFit">FIT</button><span class="zlabel" id="zPct">100%</span></div>
+    ${ROBOT_SVG}`;
+  wireTreeStage();
+  if(lastSay){const b=$('bubble'); if(b) b.innerHTML=`<span class="k">${lastSay.kicker}</span>${lastSay.html}`;}
+  if(!keepCam) fitView(false); else applyCam();
+}
+let justDragged=false;
+function wireTreeStage(){
+  const svg=$('treeSvg');
+  $('zIn').onclick=()=>zoomBy(1/1.3); $('zOut').onclick=()=>zoomBy(1.3); $('zFit').onclick=()=>fitView(true);
+  bindStepButtons();
+  svg.addEventListener('wheel',e=>{e.preventDefault();
+    const r=svg.getBoundingClientRect();
+    const mx=cam.x+((e.clientX-r.left)/r.width)*cam.w, my=cam.y+((e.clientY-r.top)/r.height)*cam.h;
+    const s=stageSize(); let w=Math.max(s.w/3.2,Math.min(WORLD.w*2.2,cam.w*(e.deltaY>0?1.15:1/1.15))), h=w*(cam.h/cam.w);
+    setCam({x:mx-(mx-cam.x)*(w/cam.w),y:my-(my-cam.y)*(h/cam.h),w,h},false);},{passive:false});
+  let down=false,moved=false,sx=0,sy=0,cx0=0,cy0=0,capId=null;
+  svg.addEventListener('pointerdown',e=>{down=true;moved=false;sx=e.clientX;sy=e.clientY;cx0=cam.x;cy0=cam.y;capId=e.pointerId;});
+  svg.addEventListener('pointermove',e=>{
+    if(!down)return; const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(!moved){ if(Math.hypot(dx,dy)<5)return; moved=true;svg.classList.add('drag');try{svg.setPointerCapture(capId);}catch(_){} }
+    const r=svg.getBoundingClientRect(); cam.x=cx0-(dx/r.width)*cam.w; cam.y=cy0-(dy/r.height)*cam.h; applyCam();});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>svg.addEventListener(ev,()=>{
+    if(moved){justDragged=true;setTimeout(()=>justDragged=false,60);try{svg.releasePointerCapture(capId);}catch(_){}}
+    down=false;moved=false;svg.classList.remove('drag');}));
+  syncStepUI();
+}
+function pick(id){
+  if(justDragged)return; if(playing)stopPlay();
+  selId=id; buildFlowSteps(); renderTree(true); syncSide(); focusNode(id,true);
+  say('Buyer chuna',`<b>${labelOf(id)}</b> ko buyer bana diya (sponsor: <b>${nodes[id].sponsor?labelOf(nodes[id].sponsor):'—'}</b>). Ab <b>Next ▶</b> ya <b>Auto play</b> dabao.`);
+}
+window.pick=pick;
+function fillSelectors(){
+  const bs=$('buyerSel'),ss=$('sponsorSel'); if(!bs||!ss)return;
+  const ids=Object.keys(nodes).map(Number).sort((a,b)=>a-b);
+  bs.innerHTML=ids.map(id=>{const n=nodes[id];
+    return `<option value="${id}" ${id===selId?'selected':''}>${labelOf(id)} — ${n.side==='root'?'root':n.side+' leg · parent '+labelOf(n.parent)}</option>`;}).join('');
+  const cur=nodes[selId].sponsor;
+  ss.innerHTML=`<option value="0" ${!cur?'selected':''}>— koi sponsor nahi —</option>`+
+    ids.filter(id=>id!==selId).map(id=>`<option value="${id}" ${id===cur?'selected':''}>${labelOf(id)}</option>`).join('');
+}
+function isUpline(of,who){let c=of;while(nodes[c].parent){if(nodes[c].parent===who)return true;c=nodes[c].parent;}return false;}
+function syncSide(){
+  const n=nodes[selId]; fillSelectors();
+  $('selWho').innerHTML=`${labelOf(selId)} <span style="color:var(--txt3);font-weight:600;font-size:.8rem">· sponsor: ${n.sponsor?labelOf(n.sponsor):'—'}${n.sponsor&&n.sponsor!==n.parent?' ⚡':''}</span>`;
+  const up=n.sponsor&&isUpline(selId,n.sponsor);
+  $('selTip').innerHTML= !n.sponsor?`Koi sponsor nahi — sirf Self + Team point banega.`
+    : n.sponsor===n.parent?`Sponsor = tree-parent. Usko <b>Direct + Team dono</b> milenge.`
+    : up?`⚡ Sponsor <b>${labelOf(n.sponsor)}</b>, tree-parent <b>${labelOf(n.parent)}</b> — alag hain. Sponsor upline me hai to <b>Direct + Team dono</b>.`
+    : `⚠️ Sponsor <b>${labelOf(n.sponsor)}</b> upline me <b>nahi</b> — usko sirf <b>Direct</b> milega. Ye case sir se confirm karna.`;
+}
+function updateStats(id){const n=nodes[id];
+  [['s',n.self],['d',n.direct],['l',n.teamL],['r',n.teamR]].forEach(([p,v])=>{const e=$(`st-${p}-${id}`);if(e)e.textContent=`${p.toUpperCase()} ${fmt(v)}`;});}
+function flyPacket(a,b,color,dur){return new Promise(res=>{
+  const fx=$('fx'); if(!fx){res();return;}
+  const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('r','9');c.setAttribute('fill',color);fx.appendChild(c);
+  const t0=Date.now(); const iv=setInterval(()=>{
+    const p=Math.min(1,(Date.now()-t0)/dur),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const mx=(x1+x2)/2,my=Math.min(y1,y2)-40,q=(u,v,w)=>Math.pow(1-e,2)*u+2*(1-e)*e*v+e*e*w;
+    c.setAttribute('cx',q(x1,mx,x2));c.setAttribute('cy',q(y1,my,y2));
+    c.setAttribute('opacity',p>.85?(1-p)/.15:1);
+    if(p>=1){clearInterval(iv);c.remove();res();}},16);});}
+function popLabel(id,text,cls){const fx=$('fx');if(!fx)return;
+  const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',X(id));t.setAttribute('y',Y(id)-R-14);t.setAttribute('class','floaty');t.setAttribute('font-size','17');
+  t.setAttribute('fill',cls==='self'?'#4ade80':cls==='direct'?'#60a5fa':cls==='tl'?'#22d3ee':'#f59e0b');
+  t.textContent=text;fx.appendChild(t);setTimeout(()=>t.remove(),1700);}
+function hitNode(id){const g=$('nd-'+id);if(!g)return;g.classList.remove('hit');void g.offsetWidth;g.classList.add('hit');setTimeout(()=>g.classList.remove('hit'),1000);}
+function hotLink(a,b,kind){const el=$(kind==='spon'?`sp-${a}`:`lk-${a}-${b}`);if(el){el.classList.add('hot');setTimeout(()=>el.classList.remove('hot'),1100);}}
+function logLine(h){const l=$('logList');if(!l)return;
+  if(l.children.length===1&&l.children[0].textContent.includes('Node chuno'))l.innerHTML='';
+  const d=document.createElement('div');d.className='ln';d.innerHTML=h;l.prepend(d);}
+
+/* ---------- flow steps ---------- */
+function buildFlowSteps(){
+  const amt=Math.max(1,+(($('amt')||{}).value)||1000), buyer=nodes[selId];
+  steps=[];
+  steps.push({kind:'intro',node:selId,amt,k:'Step 0 · Billing',
+    html:`<b>${labelOf(selId)}</b> ne <b>${fmt(amt)} PV</b> ka product khareeda. Bill me uski <b>unique ID</b> daali gayi — isi liye system ko pata hai point kisko dene hain.`});
+  steps.push({kind:'self',node:selId,amt,k:'Step 1 · Self Point',
+    html:`<span class="self">Self +${fmt(amt)}</span> → <b>${labelOf(selId)}</b> ko. Isse paisa nahi milta — ye sirf iska <b>daily capping level</b> decide karta hai.<br><b>Buyer ko team point NAHI milta.</b>`});
+  if(buyer.sponsor){
+    const sp=buyer.sponsor,skip=sp!==buyer.parent,up=isUpline(selId,sp);
+    steps.push({kind:'direct',node:sp,from:selId,amt,k:'Step 2 · Direct Point',
+      html:`<span class="direct">Direct +${fmt(amt)}</span> → <b>${labelOf(sp)}</b> ko, kyunki usne <b>${labelOf(selId)}</b> ko sponsor kiya.${skip?` Dhyan: ye iska <b>tree-parent nahi</b> (parent ${labelOf(buyer.parent)}).`:''}${up?`<br>Aur <b>sponsor ko team point bhi</b> milega — aage ke step me.`:''}`});
+  }
+  let cur=selId,i=0;
+  while(nodes[cur].parent){
+    const pid=nodes[cur].parent,side=nodes[cur].side;
+    const sl=side==='left'?'Left':'Right',cls=side==='left'?'tl':'tr'; i++;
+    steps.push({kind:'team',node:pid,from:cur,side,amt,k:`Step ${(buyer.sponsor?2:1)+i} · Team Point (${i})`,
+      html:`<span class="${cls}">${sl} Team +${fmt(amt)}</span> → <b>${labelOf(pid)}</b> ko. Kyunki <b>${labelOf(cur)}</b>, <b>${labelOf(pid)}</b> ki <b>${sl.toLowerCase()} leg</b> me hai.${pid===buyer.sponsor?`<br>⚡ Yahi sponsor hai — isko <b>Direct + Team dono</b> mile.`:''}`});
+    cur=pid;
+  }
+  steps.push({kind:'done',node:1,amt,k:'Ho gaya ✅',
+    html:`<span class="self">Self</span> sirf buyer ko · <span class="direct">Direct</span> sponsor ko · <b>Team</b> upar har ancestor ko (sponsor ko bhi). Yahi Left/Right PV aage <b>BPI matching</b> me use hoti hai.`});
+  stepIdx=-1; syncStepUI();
+}
+function applyFlowStep(s){
+  if(s.kind==='self'){nodes[s.node].self+=s.amt;logLine(`<b>${labelOf(s.node)}</b> → <span style="color:var(--self)">Self +${fmt(s.amt)}</span>`);}
+  if(s.kind==='direct'){nodes[s.node].direct+=s.amt;logLine(`<b>${labelOf(s.node)}</b> (sponsor) → <span style="color:var(--direct)">Direct +${fmt(s.amt)}</span>`);}
+  if(s.kind==='team'){
+    if(s.side==='left')nodes[s.node].teamL+=s.amt;else nodes[s.node].teamR+=s.amt;
+    logLine(`<b>${labelOf(s.node)}</b> → <span style="color:${s.side==='left'?'var(--tl)':'var(--tr)'}">${s.side==='left'?'Left':'Right'} Team +${fmt(s.amt)}</span>`);}
+}
+async function runFlowStep(i){
+  if(busy)return; busy=true; const s=steps[i];
+  say(s.k,s.html);
+  if(s.kind==='done')fitView(true); else if(s.from!==undefined)focusPair(s.from,s.node); else focusNode(s.node,true);
+  await new Promise(r=>setTimeout(r,620));
+  if(s.from!==undefined){
+    const col=s.kind==='direct'?'#60a5fa':(s.side==='left'?'#22d3ee':'#f59e0b');
+    if(s.kind==='direct')hotLink(s.from,null,'spon'); else hotLink(s.node,s.from,'link');
+    await flyPacket(s.from,s.node,col,640);
+  }
+  if(s.kind!=='intro'&&s.kind!=='done'){
+    applyFlowStep(s); updateStats(s.node); hitNode(s.node);
+    popLabel(s.node,'+'+fmt(s.amt)+' '+(s.kind==='self'?'Self':s.kind==='direct'?'Direct':(s.side==='left'?'Left':'Right')),
+      s.kind==='self'?'self':s.kind==='direct'?'direct':(s.side==='left'?'tl':'tr'));
+  }
+  if(s.kind==='intro')hitNode(s.node);
+  busy=false;
+}
+function gotoFlowStep(i){
+  Object.values(nodes).forEach(n=>{n.self=0;n.direct=0;n.teamL=0;n.teamR=0;});
+  const l=$('logList'); if(l)l.innerHTML='<div class="ln">Naya run shuru…</div>';
+  for(let k=0;k<=i;k++) if(steps[k]) applyFlowStep(steps[k]);
+  stepIdx=i; renderTree(true); syncStepUI();
+  if(i>=0&&steps[i]){say(steps[i].k,steps[i].html);focusNode(steps[i].node,false);}
+  else say('Ready',`Buyer <b>${labelOf(selId)}</b> select hai. <b>Next ▶</b> ya <b>Auto play</b> dabao — main har step samjhaunga.`);
+}
+
+/* =======================================================================
+   UNIVERSAL STEP PLAYER  (flow tree + all decks)
+   ======================================================================= */
+let steps=[],stepIdx=-1,playing=false,playTimer=null,busy=false,mode='flow';
+function syncStepUI(){
+  const c=$('stepCount'),p=$('pbarI');
+  if(c)c.textContent=`${Math.max(0,stepIdx+1)} / ${steps.length}`;
+  if(p)p.style.width=steps.length?(((stepIdx+1)/steps.length)*100)+'%':'0%';
+  const pv=$('sPrev'),nx=$('sNext');
+  if(pv)pv.disabled=stepIdx<0; if(nx)nx.disabled=stepIdx>=steps.length-1;
+}
+function bindStepButtons(){
+  const p=$('sPlay'); if(!p)return;
+  p.onclick=togglePlay;
+  $('sNext').onclick=()=>{stopPlay();nextStep();};
+  $('sPrev').onclick=()=>{stopPlay();prevStep();};
+  $('sReplay').onclick=()=>{stopPlay();gotoStep(-1);};
+}
+function gotoStep(i){ mode==='flow'?gotoFlowStep(i):gotoDeckStep(i); }
+function nextStep(){ if(busy||stepIdx>=steps.length-1)return; stepIdx++;
+  mode==='flow'?runFlowStep(stepIdx):runDeckStep(stepIdx); syncStepUI(); }
+function prevStep(){ if(busy||stepIdx<0)return;
+  if(mode==='flow')gotoFlowStep(stepIdx-1); else {stepIdx--;runDeckStep(stepIdx);syncStepUI();} }
+function togglePlay(){ playing?stopPlay():startPlay(); }
+function startPlay(){
+  if(stepIdx>=steps.length-1)gotoStep(-1);
+  playing=true; const b=$('sPlay'); if(b)b.textContent='⏸ Pause';
+  const tick=()=>{ if(!playing)return; if(stepIdx>=steps.length-1){stopPlay();return;}
+    nextStep(); playTimer=setTimeout(tick, mode==='flow'?2900:3600); };
+  playTimer=setTimeout(tick,300);
+}
+function stopPlay(){ playing=false; clearTimeout(playTimer); const b=$('sPlay'); if(b)b.textContent='▶ Auto play'; }
+
+/* =======================================================================
+   DECK ENGINE (all non-tree tabs)
+   ======================================================================= */
+function renderDeckShell(){
+  $('stage').innerHTML=`<div class="deck"><div class="scene" id="scene"></div></div>${STEPBAR}${ROBOT_SVG}`;
+  bindStepButtons();
+  if(lastSay){const b=$('bubble'); if(b)b.innerHTML=`<span class="k">${lastSay.kicker}</span>${lastSay.html}`;}
+}
+function runDeckStep(i){
+  const s=steps[i]; const sc=$('scene'); if(!sc)return;
+  if(i<0){ sc.innerHTML=''; say('Ready','<b>Next ▶</b> ya <b>Auto play</b> dabao — main ek-ek karke samjhaunga.'); return; }
+  sc.innerHTML=typeof s.html==='function'?s.html():s.html;
+  say(s.k,s.say);
+  if(s.after) s.after();
+}
+function gotoDeckStep(i){ stepIdx=i; runDeckStep(i); syncStepUI(); }
+
+/* =======================================================================
+   SHARED DOMAIN DATA
+   ======================================================================= */
+const CAP_ROWS=[
+  [0,'0–249','—','no payout','—'],
+  [1,250,1000,800,0],[2,500,2000,1600,50],[3,750,3000,2400,100],[4,1000,4000,3200,150],
+  [5,2000,5000,4000,200],[6,3000,7000,5600,300],[7,4000,10000,8000,400],[8,5000,12000,9600,500],
+];
+function levelFor(pv){let l=CAP_ROWS[0];for(const r of CAP_ROWS){if(typeof r[1]==='number'&&pv>=r[1])l=r;}if(pv<250)l=CAP_ROWS[0];return l;}
+function capTableHTML(hl){
+  let rows='';
+  CAP_ROWS.forEach((r,i)=>{const nx=CAP_ROWS[i+1]?CAP_ROWS[i+1][1]:Infinity;
+    const on=hl!==undefined&&((r[0]===0&&hl<250)||(typeof r[1]==='number'&&hl>=r[1]&&hl<nx));
+    rows+=`<tr class="${on?'hl':''}"><td><b>${r[0]}</b></td><td>${typeof r[1]==='number'?fmt(r[1])+' PV':r[1]}</td><td>${typeof r[2]==='number'?fmt(r[2]):r[2]}</td><td>${typeof r[3]==='number'?'₹'+fmt(r[3]):r[3]}</td><td>${typeof r[4]==='number'?fmt(r[4])+' PV':r[4]}</td></tr>`;});
+  return `<table class="t"><thead><tr><th>Lv</th><th>Self PV</th><th>Daily cap (PV match)</th><th>Max ₹/day</th><th>Monthly maintain</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+const ACH_PER=[0,30000,40000,53333,70000,175000];
+
+/* =======================================================================
+   DECK: BPI
+   ======================================================================= */
+let bDay=1,bWeek=1,bCarryL=0,bCarryR=0,bWeekTotal=0,bWashTotL=0,bWashTotR=0,bHist=[];
+/* CARRY FORWARD & WASHOUT - final rule (client confirm):
+   1. Matching pehle AAJ ka business kharch karti hai, uske baad purana carry.
+   2. Purana carry jo bacha -> hamesha aage. Old carry KABHI wash nahi hota.
+   3. Aaj ke business ka jo bacha -> wahi wash hota hai.
+   4. Strong side = jiska total (carry + aaj) bada. Weak side = jiska chhota.
+   5. Weak side pe wash nahi hua -> strong side pe bhi nahi hoga.
+   6. Matching bani hi nahi -> kuch wash nahi, sab carry forward. */
+function bpiCompute(oldL,oldR,todayL,todayR,cap){
+  const availL=oldL+todayL,availR=oldR+todayR;
+  const rawMatch=Math.floor(Math.min(availL,availR)/1000)*1000;
+  const matched=Math.min(rawMatch,cap), payout=Math.round(matched*.8);
+  const side=(c,t)=>{const tU=Math.min(t,matched),cU=Math.min(c,matched-tU);
+    return {todayLeft:t-tU,carryLeft:c-cU,tUsed:tU,cUsed:cU};};
+  const L=side(oldL,todayL),R=side(oldR,todayR);
+  let washL=L.todayLeft,washR=R.todayLeft;
+  const strongIsL=availL>availR, strongIsR=availR>availL;
+  if(matched===0){washL=0;washR=0;}
+  else{
+    const weakWash = strongIsL?washR : (strongIsR?washL : Math.min(washL,washR));
+    if(weakWash===0){ if(strongIsL)washL=0; else if(strongIsR)washR=0; else {washL=0;washR=0;} }
+  }
+  return {availL,availR,rawMatch,matched,payout,washL,washR,
+    carryL:L.carryLeft+(L.todayLeft-washL),
+    carryR:R.carryLeft+(R.todayLeft-washR),
+    tUsedL:L.tUsed,tUsedR:R.tUsed,cUsedL:L.cUsed,cUsedR:R.cUsed,
+    strongSide: strongIsL?'LEFT':(strongIsR?'RIGHT':'barabar'),
+    weakSide: strongIsL?'RIGHT':(strongIsR?'LEFT':'barabar')};
+}
+function bpiRun(){
+  const selfPV=+$('bSelf').value||0, lvl=levelFor(selfPV), cap=lvl[0]===0?0:lvl[2];
+  const todayL=+$('bLeft').value||0, todayR=+$('bRight').value||0;
+  const oldL=bCarryL,oldR=bCarryR;
+  const r=bpiCompute(oldL,oldR,todayL,todayR,cap);
+  bCarryL=r.carryL;bCarryR=r.carryR;bWashTotL+=r.washL;bWashTotR+=r.washR;bWeekTotal+=r.payout;
+  bHist.push({d:bDay,oldL,todayL,oldR,todayR,cap,...r});
+  bDay++;
+  bpiPaint(r,lvl,oldL,oldR,todayL,todayR,cap);
+  say('Matching hui',
+    `Left <b>${fmt(r.availL)}</b> vs Right <b>${fmt(r.availR)}</b> → matched <b>${fmt(r.matched)}</b> (Level ${lvl[0]} cap ${fmt(cap)}) → payout <span class="gd">${fmt(r.payout)}</span>.`+
+    ` Strong = <b>${r.strongSide}</b>, weak = <b>${r.weakSide}</b>.`+
+    (r.matched===0?` <b>Matching bani hi nahi → kuch wash nahi.</b> Dono side pura aage.`
+      :(r.washL||r.washR)
+        ?` Purana carry bach gaya (L <b>${fmt(r.carryL)}</b>, R <b>${fmt(r.carryR)}</b>). Wash sirf <b>aaj ke bache hue business</b> ka — L <span class="bd">${fmt(r.washL)}</span>, R <span class="bd">${fmt(r.washR)}</span>.`
+        :` Weak side pe wash nahi hua → strong side pe bhi nahi. <b>Kuch wash nahi.</b>`));
+}
+function bpiPaint(r,lvl,oldL,oldR,todayL,todayR,cap){
+  const el=$('bOut'); if(!el)return;
+  el.innerHTML=`
+   <div class="big">
+     <div class="stat cy"><div class="k">Matched PV</div><div class="v">${fmt(r.matched)}</div><div class="n">cap ${fmt(cap)}</div></div>
+     <div class="stat gd"><div class="k">Payout 80%</div><div class="v">${fmt(r.payout)}</div></div>
+     <div class="stat"><div class="k">Carry → Left</div><div class="v" style="color:#22d3ee">${fmt(r.carryL)}</div></div>
+     <div class="stat"><div class="k">Carry → Right</div><div class="v" style="color:#f59e0b">${fmt(r.carryR)}</div></div>
+     <div class="stat bd"><div class="k">Wash L / R</div><div class="v">${fmt(r.washL)} / ${fmt(r.washR)}</div></div>
+   </div>
+   <table class="t"><thead><tr><th>Day</th><th>Old L</th><th>Aaj L</th><th>Old R</th><th>Aaj R</th><th>Match</th><th>Payout</th><th>Wash L</th><th>Wash R</th><th>Carry L</th><th>Carry R</th></tr></thead><tbody>
+   ${bHist.slice(-4).map(h=>`<tr><td>${h.d}</td><td>${fmt(h.oldL)}</td><td>${fmt(h.todayL)}</td><td>${fmt(h.oldR)}</td><td>${fmt(h.todayR)}</td><td><b>${fmt(h.matched)}</b></td><td style="color:#4ade80">${fmt(h.payout)}</td><td style="color:#f87171">${fmt(h.washL)}</td><td style="color:#f87171">${fmt(h.washR)}</td><td>${fmt(h.carryL)}</td><td>${fmt(h.carryR)}</td></tr>`).join('')}
+   </tbody></table>
+   <div class="note ${r.matched===0?'wa':'ok'}"><span class="l">Hisaab</span>
+     Level ${lvl[0]} (Self ${fmt(+$('bSelf').value||0)} PV) → cap <b>${fmt(cap)}</b>.
+     min(${fmt(r.availL)}, ${fmt(r.availR)}) → 1000-multiple = ${fmt(r.rawMatch)} → matched <b>${fmt(r.matched)}</b> → 80% = <b>${fmt(r.payout)}</b>.<br>
+     Matching pehle <b>AAJ ka business</b> kharch karti hai, phir purana carry —
+     Left: aaj ${fmt(r.tUsedL)} + carry ${fmt(r.cUsedL)} · Right: aaj ${fmt(r.tUsedR)} + carry ${fmt(r.cUsedR)}.<br>
+     Strong side = <b>${r.strongSide}</b> · weak side = <b>${r.weakSide}</b>.<br>
+     ${r.matched===0?'Matching bani hi nahi → <b>kuch wash nahi</b>, dono side pura carry forward.'
+       :(r.washL||r.washR)?`Purana carry bacha → <b>aage jaayega</b> (L ${fmt(r.carryL)}, R ${fmt(r.carryR)}). Aaj ka bacha hua → <b class="bd">wash</b> (L ${fmt(r.washL)}, R ${fmt(r.washR)}). Old carry kabhi wash nahi hota.`
+       :`Weak side pe wash nahi hua → <b>strong side pe bhi nahi</b>. Dono ka bacha hua carry forward (L ${fmt(r.carryL)}, R ${fmt(r.carryR)}).`}
+   </div>`;
+}
+function bpiSimHTML(){
+  return `<h2>💰 Live BPI Simulator</h2>
+  <p class="lead">Apne numbers daal ke chalao — capping, matching, carry aur washout sab live dikhega.</p>
+  <div class="ctl">
+    <div class="row">
+      <div><label class="mini">Aaj ka Left PV</label><input type="number" id="bLeft" value="4000"></div>
+      <div><label class="mini">Aaj ka Right PV</label><input type="number" id="bRight" value="6000"></div>
+      <div><label class="mini">Tumhari Self PV (cap decide)</label><input type="number" id="bSelf" value="1000" step="250"></div>
+    </div>
+    <div class="note ru" style="margin:10px 0 0"><span class="l">Rule</span>Matching pehle <b>AAJ ka business</b> kharch karti hai, phir purana carry. <b>Purana carry kabhi wash nahi hota</b> — sirf <b>aaj ka bacha hua</b> wash hota hai. Aur <b>weak side pe wash nahi hua to strong side pe bhi nahi</b>.</div>
+    <div class="btns">
+      <button class="bRun" id="bRun">▶ Matching chalao</button>
+      <button class="bNxt" id="bNext">Next Day →</button>
+      <button class="bWk" id="bClose">📅 Close Week</button>
+      <button class="bGr" id="bDemo">📋 Photo example</button>
+    </div>
+  </div>
+  <div id="bOut"></div>`;
+}
+function bpiWire(){
+  $('bRun').onclick=bpiRun;
+  $('bNext').onclick=()=>{$('bLeft').value=0;$('bRight').value=0;
+    say('Naya din','Purana carry (L <b>'+fmt(bCarryL)+'</b>, R <b>'+fmt(bCarryR)+'</b>) apne aap judega. Aaj ka naya business daal ke matching chalao.');};
+  $('bClose').onclick=()=>{ say('Friday close',`Poore hafte ka payout <b>${fmt(bWeekTotal)}</b> ek single report me. Ab current-week counter <b>0</b> ho gaya — carry forward waisa hi rehta hai.`); bWeek++;bWeekTotal=0; };
+  $('bDemo').onclick=()=>{
+    bDay=1;bCarryL=159400;bCarryR=2047;bWashTotL=0;bWashTotR=0;bWeekTotal=0;bHist=[];
+    $('bSelf').value=500;$('bLeft').value=0;$('bRight').value=0;
+    say('Photo ka example','Day-1 ka purana carry set: L <b>1,59,400</b>, R <b>2,047</b>. Self 500 → cap <b>2,000</b>. Ab <b>Matching chalao</b> → carry L <b>1,57,400</b> / R <b>47</b> aayega. Phir Right me <b>2394</b> daal ke dobara chalao → wash <b>394</b> (aapki sheet wala number).');
+  };
+}
+const DECK_BPI=[
+ {k:'BPI kya hai',say:'<b>BPI = Business Promotion Incentive</b>. Ye <b>Left team</b> aur <b>Right team</b> ke PV ko roz match karta hai, aur matched PV ka <span class="gd">80%</span> tumhe deta hai.',
+  html:`<h2>💰 BPI — Business Promotion Incentive</h2>
+   <p class="lead">Roz ka khel: Left team ka PV aur Right team ka PV — dono me se <b>jitna match hota hai</b>, uska <b>80%</b> payout.</p>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Left Team</div><div class="v">1,000 PV</div></div>
+     <div class="arw2">⟷ match ⟷</div>
+     <div class="stat am"><div class="k">Right Team</div><div class="v">1,000 PV</div></div>
+     <div class="arw2">=</div>
+     <div class="stat gd"><div class="k">Payout</div><div class="v">80%</div></div>
+   </div>
+   <div class="note ru"><span class="l">Rule</span>Matching hamesha <b>1,000 PV ke multiple</b> me hoti hai. 2,900 PV match ho to sirf <b>2,000</b> hi count hoga.</div>`},
+
+ {k:'Step 1 — Match nikalo',say:'Pehle dono side ka PV dekho. Jo <b>chhota</b> hai wahi match hota hai — usko 1,000 ke multiple me neeche round karo.',
+  html:`<h2>Step 1 · Matching nikalna</h2>
+   <div class="big">
+     <div class="stat cy"><div class="k">Left</div><div class="v">4,000</div></div>
+     <div class="stat am"><div class="k">Right</div><div class="v">6,000</div></div>
+     <div class="stat pu"><div class="k">min(L,R)</div><div class="v">4,000</div></div>
+     <div class="stat gd"><div class="k">Matched</div><div class="v">4,000</div><div class="n">1000 ka multiple</div></div>
+   </div>
+   <div class="note ok"><span class="l">Payout</span>4,000 × <b>80%</b> = <b>3,200</b> · Right side ka bacha hua <b>2,000</b> aage jaayega.</div>`},
+
+ {k:'Step 2 — Capping lagti hai',say:'Par ruko! Matching <b>tumhari Self PV ke capping level</b> tak hi hogi. Self PV kam hai to matching bhi kam.',
+  html:`<h2>Step 2 · Capping — sabse important</h2>
+   <p class="lead">Tumhari <b>Self PV</b> decide karti hai roz kitni matching count hogi.</p>
+   <div class="big">
+     <div class="stat"><div class="k">Self PV 500</div><div class="v" style="color:#c4b5fd">Level 2</div></div>
+     <div class="arw2">→</div>
+     <div class="stat bd"><div class="k">Daily cap</div><div class="v">2,000</div></div>
+     <div class="arw2">so</div>
+     <div class="stat cy"><div class="k">4,000 match hone pe</div><div class="v">sirf 2,000</div></div>
+     <div class="stat gd"><div class="k">Payout</div><div class="v">1,600</div></div>
+   </div>
+   <div class="note wa"><span class="l">Dhyan</span>Self PV <b>250 se kam</b> → Level 0 → <b>koi payout nahi</b>, chahe kitna bhi team PV ho.</div>`},
+
+ {k:'Step 3 — Matching pehle AAJ ka business kharch karti hai',say:'Ab sabse zaroori step. Jab matching hoti hai, sabse pehle <b>aaj ka naya business</b> use hota hai — uske baad hi purana carry lagta hai.',
+  html:`<h2>Step 3 · Pehle AAJ ka, phir purana carry</h2>
+   <p class="lead">Matching ka order fix hai — <b>aaj ka business pehle</b>, purana carry baad me. Isi order se pura hisaab nikalta hai.</p>
+   <div class="arrowrow">
+     <div class="stat am"><div class="k">Aaj ka business</div><div class="v">Pehle</div><div class="n">sabse pehle isi se match</div></div>
+     <div class="arw2">phir</div>
+     <div class="stat cy"><div class="k">Purana carry</div><div class="v">Baad me</div><div class="n">bacha hua match isi se</div></div>
+   </div>
+   <div class="note ru"><span class="l">Example</span>Right me carry <b>0</b> aur aaj ka business <b>1,200</b>. Matching <b>1,000</b> hui → pura 1,000 aaj ke business me se laga. Aaj ka bacha = 1,200 − 1,000 = <b>200</b>.</div>`},
+
+ {k:'Step 4 — Strong side vs Weak side',say:'Ab washout ka faisla. Dono side ka <b>total</b> (purana carry + aaj ka business) jodo — jiska bada wo <b>strong</b>, jiska chhota wo <b>weak</b>.',
+  html:`<h2>Step 4 · Strong side / Weak side</h2>
+   <p class="lead">Total = <b>purana carry + aaj ka business</b>. Isi total se strong aur weak decide hota hai.</p>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Left total</div><div class="v">2,800</div><div class="n">2000 carry + 800 aaj</div></div>
+     <div class="arw2">vs</div>
+     <div class="stat am"><div class="k">Right total</div><div class="v">1,200</div><div class="n">0 carry + 1200 aaj</div></div>
+   </div>
+   <div class="note ok"><span class="l">Faisla</span>Left ka total bada → <b>Left = STRONG</b>. Right ka chhota → <b>Right = WEAK</b>.</div>`},
+
+ {k:'Step 5 — Kya bachta, kya udta',say:'<b>Purana carry kabhi wash nahi hota</b> — jo bache wo hamesha aage. Sirf <b>aaj ke business ka bacha hua</b> hissa wash hota hai. Aur ek guard: <b>weak side pe wash nahi hua to strong side pe bhi nahi</b>.',
+  html:`<h2>Step 5 · Carry forward vs Wash out</h2>
+   <div class="big">
+     <div class="stat gd"><div class="k">PURANA CARRY</div><div class="v">Bach gaya ✓</div><div class="n">hamesha aage — kabhi wash nahi</div></div>
+     <div class="stat bd"><div class="k">AAJ KA BACHA HUA</div><div class="v">Wash ✗</div><div class="n">us din ke baad khatam</div></div>
+   </div>
+   <div class="note ok"><span class="l">Purana carry</span>Pichhle dinon se jo PV chala aa raha hai wo <b>kabhi washout nahi</b> hoga.</div>
+   <div class="note wa"><span class="l">Aaj ka business</span>Aaj jo naya PV aaya, usme se jitna matching me lag gaya wo kaam aa gaya. Jo bacha — <b>wash out</b>.</div>
+   <div class="note ru"><span class="l">Guard — zaroori</span><b>Weak side pe washout nahi hua → strong side pe bhi nahi hoga.</b> Uska bacha hua bhi carry forward ho jaayega.</div>`},
+
+ {k:'Chaar example — sir ne diye',say:'Ye chaar case sir ne khud diye hain. Har ek ko simulator me daal ke check kar sakte ho.',
+  html:`<h2>📋 Chaar example</h2>
+   <table class="t"><thead><tr><th>#</th><th>Left (carry + aaj)</th><th>Right (carry + aaj)</th><th>Match</th><th>Result</th></tr></thead><tbody>
+   <tr><td>1</td><td>0 + 500 = 500</td><td>0 + 300 = 300</td><td><b>0</b></td><td>Matching bani hi nahi → dono side pura <b>carry</b> (500 / 300). Koi wash nahi.</td></tr>
+   <tr><td>2</td><td>300 + 800 = 1,100</td><td>500 + 1,000 = 1,500</td><td><b>1,000</b></td><td>Dono ka aaj ka business match me lag gaya → <b>koi wash nahi</b>. Carry: L <b>100</b>, R <b>500</b>.</td></tr>
+   <tr><td>3</td><td>2,000 + 0 = 2,000</td><td>900 + 100 = 1,000</td><td><b>1,000</b></td><td>Carry: L <b>1,000</b>, R <b>0</b>. Koi wash nahi.</td></tr>
+   <tr class="hl"><td>4</td><td>2,000 + 800 = 2,800</td><td>0 + 1,200 = 1,200</td><td><b>1,000</b></td><td>Strong = Left, weak = Right. L ka aaj ka 800 pura laga → carry <b>1,800</b>. R ka aaj ka <b>200 wash</b>.</td></tr>
+   </tbody></table>
+   <div class="note ok"><span class="l">Purani sheet se bhi match</span>Day-1: L carry 1,59,400 · R carry 2,047 → match 2,000 → carry <b>1,57,400 / 47</b>. Day-2: R me 2,394 naya → match 2,000 → wash <b>394</b> — aapki sheet me bhi 394 hi tha. ✅</div>`},
+
+ {k:'Rule — matching nahi to wash nahi',say:'Ek zaroori exception: agar us din <b>matching bani hi nahi</b>, to <b>washout bhi nahi</b> hoga — dono side ka pura PV aage jaayega.',
+  html:`<h2>Agar matching bani hi nahi?</h2>
+   <div class="big">
+     <div class="stat cy"><div class="k">Left</div><div class="v">500</div></div>
+     <div class="stat am"><div class="k">Right</div><div class="v">300</div></div>
+     <div class="stat bd"><div class="k">Matched</div><div class="v">0</div><div class="n">1000 se kam</div></div>
+     <div class="stat gd"><div class="k">Washout</div><div class="v">0</div><div class="n">kuch nahi gaya</div></div>
+   </div>
+   <div class="note ok"><span class="l">Rule</span><b>Matching nahi bani → washout bhi nahi.</b> Dono side ka pura PV carry forward hoga.</div>`},
+
+ {k:'Daily → Weekly',say:'Matching <b>roz</b> hoti hai, par paisa <b>har Friday</b> ek single weekly payout me milta hai. Poori history audit ke liye rehti hai.',
+  html:`<h2>Daily matching → Weekly payout</h2>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Roz</div><div class="v">Matching</div><div class="n">daily closing</div></div>
+     <div class="arw2">→</div>
+     <div class="stat pu"><div class="k">Hafte bhar</div><div class="v">Jodta hai</div></div>
+     <div class="arw2">→</div>
+     <div class="stat gd"><div class="k">Friday</div><div class="v">1 Payout</div><div class="n">weekly report</div></div>
+   </div>
+   <div class="note ru"><span class="l">History</span>Har din ka aur har hafte ka record <b>audit ke liye save</b> rehta hai — user apna purana data khud dekh sakta hai. Week close hone pe current-week counter 0 ho jaata hai.</div>`},
+
+ {k:'Ab khud chala ke dekho',say:'Ye raha <b>live simulator</b>. Numbers badlo, <b>Matching chalao</b> dabao. <b>"Photo example"</b> button se tumhara wala Day-1/Day-2 case bhi chala sakte ho.',
+  html:bpiSimHTML, after:bpiWire},
+];
+
+/* =======================================================================
+   DECK: CAPPING
+   ======================================================================= */
+function capSliderHTML(){
+  return `<h2>📊 Apni level dekho</h2>
+   <p class="lead">Slider ghumao — self PV ke hisaab se level aur daily cap turant badlega.</p>
+   <div class="ctl"><label class="mini">Tumhari Self PV</label>
+     <input type="range" id="capSlider" min="0" max="5500" step="10" value="1000" style="width:100%;accent-color:#a855f7">
+     <div id="capTip" style="font-size:1rem;color:#fff;margin-top:9px;font-weight:600"></div></div>
+   <div id="capTbl"></div>`;
+}
+function capWire(){
+  const f=()=>{const v=+$('capSlider').value,l=levelFor(v);
+    $('capTbl').innerHTML=capTableHTML(v);
+    $('capTip').innerHTML=l[0]===0
+      ?`Self PV <b>${fmt(v)}</b> → <span style="color:#f87171">Level 0 — koi payout nahi</span>`
+      :`Self PV <b>${fmt(v)}</b> → <b style="color:#4ade80">Level ${l[0]}</b> → daily cap <b>${fmt(l[2])} PV</b> (max ₹${fmt(l[3])}/day) · monthly maintain <b>${fmt(l[4])} PV</b>`;};
+  $('capSlider').oninput=f; f();
+}
+const DECK_CAP=[
+ {k:'Capping kya hai',say:'Tumhari <b>Self PV</b> — yaani tumne khud kitna kharida — decide karti hai ki roz <b>kitni matching</b> tumhe mil sakti hai. Isse zyada team PV ho to bhi cap tak hi milega.',
+  html:`<h2>📊 Self-PV Daily Capping</h2>
+   <p class="lead">Jitna tum khud kharidoge, utni badi matching tum le paoge. Ye system ko balanced rakhta hai.</p>
+   <div class="arrowrow">
+     <div class="stat"><div class="k">Tumne khud kharida</div><div class="v" style="color:#4ade80">Self PV</div></div>
+     <div class="arw2">→</div>
+     <div class="stat pu"><div class="k">Ye decide karta</div><div class="v">Level</div></div>
+     <div class="arw2">→</div>
+     <div class="stat cy"><div class="k">Roz max matching</div><div class="v">Daily cap</div></div>
+   </div>`},
+ {k:'Level 0 — 250 se kam',say:'Sabse pehla rule: agar Self PV <b>250 se kam</b> hai, to <span class="bd">koi payout nahi</span> — chahe team me kitna bhi PV aa jaye.',
+  html:`<h2>Level 0 — no payout zone</h2>
+   <div class="big">
+     <div class="stat bd"><div class="k">Self PV</div><div class="v">0 – 249</div></div>
+     <div class="arw2">→</div>
+     <div class="stat bd"><div class="k">Daily cap</div><div class="v">₹0</div><div class="n">kuch nahi milega</div></div>
+   </div>
+   <div class="note wa"><span class="l">BPA activation</span>Registration free hai, KYC zaroori, min age 18. Par ID <b>activate</b> karne aur earning shuru karne ke liye <b>250 PV ki self-purchase</b> mandatory hai — yahi Level 1 ka floor hai.</div>`},
+ {k:'Poori table',say:'Ye rahi poori table — <b>8 levels</b>. Self PV badhti jaayegi, daily cap bhi badhta jaayega. Aakhri column dekho: level maintain karne ke liye <b>har mahine</b> minimum purchase zaroori hai.',
+  html:()=>`<h2>Saare 8 levels</h2>${capTableHTML()}
+   <div class="note wa"><span class="l">Monthly maintenance</span>Level bachaye rakhne ke liye <b>har mahine</b> "Monthly maintain" column jitni self PV kharidni padegi — nahi kharidi to agle mahine <b>cap gir jaayega</b>.</div>`},
+ {k:'Khud try karo',say:'Slider ghuma ke dekho — apni self PV pe kaunsa level aur kitna cap milta hai.',
+  html:capSliderHTML, after:capWire},
+ {k:'BPI se connection',say:'Yaad rakhna — yahi cap <b>BPI matching</b> me lagta hai. Team me 10,000 PV match ho par cap 2,000 ho, to sirf <b>2,000</b> hi milega.',
+  html:`<h2>Capping ↔ BPI ka rishta</h2>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Team match hua</div><div class="v">10,000</div></div>
+     <div class="arw2">par cap</div>
+     <div class="stat bd"><div class="k">Level 2 cap</div><div class="v">2,000</div></div>
+     <div class="arw2">→</div>
+     <div class="stat gd"><div class="k">Actual payout</div><div class="v">1,600</div><div class="n">2,000 ka 80%</div></div>
+   </div>
+   <div class="note ru"><span class="l">Yaad rakho</span>Cap se upar ka team PV kaam nahi aata — isliye <b>self purchase maintain karna</b> business ke liye zaroori hai.</div>`},
+];
+
+/* =======================================================================
+   DECK: STARTUP
+   ======================================================================= */
+const DECK_START=[
+ {k:'Startup Incentive',say:'Ye ek <b>one-time bonus</b> hai — jab tumhare <b>direct PV</b> (jinko tumne sponsor kiya, unki purchase) pehli baar milestone cross karti hai.',
+  html:`<h2>🚀 Startup Incentive — 51%</h2>
+   <p class="lead">Naye members ke liye jaldi kamai shuru karne ka bonus. Direct PV pe milta hai — team PV pe nahi.</p>
+   <div class="note ru"><span class="l">Direct PV kya</span>Jin logon ko <b>tumne khud sponsor</b> kiya, unki total purchase ka PV. Ye BPI ki team matching se <b>alag</b> cheez hai.</div>`},
+ {k:'Milestone 1',say:'Pehla milestone: direct PV <b>3,000</b> pahunchte hi tumhe uska <b>70%</b> = <span class="gd">₹2,100</span> mil jaata hai.',
+  html:`<h2>Milestone 1 · 3,000 PV</h2>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Direct PV</div><div class="v">3,000</div></div>
+     <div class="arw2">× 70%</div>
+     <div class="stat gd"><div class="k">Mil gaya</div><div class="v">₹2,100</div></div>
+   </div>`},
+ {k:'Milestone 2',say:'Doosra milestone: cumulative direct PV <b>10,000</b> pahunchne pe <b>aur</b> <span class="gd">₹3,000</span> milte hain.',
+  html:`<h2>Milestone 2 · 10,000 PV</h2>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Cumulative direct PV</div><div class="v">10,000</div></div>
+     <div class="arw2">+ 30%</div>
+     <div class="stat gd"><div class="k">Aur mila</div><div class="v">₹3,000</div></div>
+   </div>`},
+ {k:'Total = 51%',say:'Dono jod do: 2,100 + 3,000 = <b>₹5,100</b> — jo 10,000 ka exactly <b>51%</b> hai. Isi liye scheme ka naam "51%" hai.',
+  html:`<h2>Isi liye naam "51%"</h2>
+   <div class="arrowrow">
+     <div class="stat"><div class="k">Milestone 1</div><div class="v" style="color:#4ade80">₹2,100</div></div>
+     <div class="arw2">+</div>
+     <div class="stat"><div class="k">Milestone 2</div><div class="v" style="color:#4ade80">₹3,000</div></div>
+     <div class="arw2">=</div>
+     <div class="stat gd"><div class="k">Total</div><div class="v">₹5,100</div><div class="n">= 10,000 ka 51%</div></div>
+   </div>
+   <div class="note wa"><span class="l">One-time only</span>Ye milestone bonus hai — har milestone pe <b>ek hi baar</b> milta hai, roz nahi. (BPI daily chalta hai, ye alag hai.)</div>`},
+
+ {k:'⏳ TIME LIMIT — naya rule',say:'Ab sabse zaroori naya rule. Startup Incentive <b>hamesha ke liye khula nahi</b> rehta — member ki <b>ID activation date</b> se ek window chalti hai. Window khatam, incentive khatam.',
+  html:`<h2>⏳ Startup Incentive pe Time Limit</h2>
+   <p class="lead">Window <b>ID activation ki date</b> se shuru hoti hai. Admin isko <b>mahino me ya dino me</b> set kar sakta hai.</p>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">ID activate hui</div><div class="v" style="font-size:1.1rem">Day 0</div><div class="n">yahin se ginti shuru</div></div>
+     <div class="arw2">→</div>
+     <div class="stat pu"><div class="k">Window</div><div class="v" style="font-size:1.1rem">180 din</div><div class="n">= 6 mahine (example)</div></div>
+     <div class="arw2">→</div>
+     <div class="stat bd"><div class="k">Window ke baad</div><div class="v" style="font-size:1.1rem">Band</div><div class="n">ab ban hi nahi sakta</div></div>
+   </div>
+   <div class="note ok"><span class="l">Window ke andar achieve kiya</span>Milestone pura ho gaya → <b>incentive mil jaayega</b>, jaisa upar bataya.</div>
+   <div class="note wa"><span class="l">Window ke andar achieve NAHI kiya</span>Member <b>Startup Incentive se bahar</b> ho jaata hai — aage kabhi nahi banega. Ye time limit <b>pehle milestone</b> pe lagti hai.</div>
+   <div class="note ok"><span class="l">Admin ke haath me</span>Window ki value <b>poori tarah Admin decide karta hai</b> — jitne din ya mahine chahe rakhe, aur baad me badal bhi sakta hai. System me koi fix number hardcode nahi hoga. (180 din sirf ek example hai.)</div>`},
+];
+
+/* =======================================================================
+   DECK: MENTOR
+   ======================================================================= */
+function mentorRingHTML(){
+  const c=['#4ade80','#22d3ee','#60a5fa','#a855f7','#f472b6'];
+  let circles='',style='<style>',labels='';
+  for(let i=0;i<5;i++){const r=38+i*24,len=2*Math.PI*r;
+    circles+=`<circle cx="150" cy="150" r="${r}" fill="none" stroke="${c[i]}" stroke-width="9" stroke-dasharray="${len}" stroke-dashoffset="${len}" style="animation:dr${i} .9s ease forwards ${i*.14}s"/>`;
+    style+=`@keyframes dr${i}{to{stroke-dashoffset:0}}`;
+    labels+=`<text x="150" y="${150-38-i*24}" fill="${c[i]}" font-size="10.5" font-weight="800" text-anchor="middle">L${i+1} · 7%</text>`;}
+  return `${style}</style><svg width="310" height="310" viewBox="0 0 300 300" style="display:block;margin:0 auto">
+    <circle cx="150" cy="150" r="13" fill="#a855f7"/><text x="150" y="154" fill="#fff" font-size="9.5" font-weight="800" text-anchor="middle">YOU</text>
+    ${circles}${labels}</svg>`;
+}
+const DECK_MENTOR=[
+ {k:'Sabse zaroori baat',say:'Dhyan se suno — Mentor Incentive <b>SPONSOR tree</b> pe chalta hai, binary placement tree pe <b>nahi</b>. Ye do alag structures hain.',
+  html:`<h2>🎓 Mentor's Incentive — max 35%</h2>
+   <div class="big">
+     <div class="stat cy"><div class="k">Placement tree</div><div class="v" style="font-size:1.1rem">Binary — sirf 2 leg</div><div class="n">BPI matching yahan se</div></div>
+     <div class="stat pu"><div class="k">Sponsor tree</div><div class="v" style="font-size:1.1rem">Kitne bhi log</div><div class="n">Mentor incentive yahan se</div></div>
+   </div>
+   <div class="note ru"><span class="l">Farq</span>Binary tree me har node ke sirf <b>2 child</b> hote. Sponsor tree me tum <b>jitno ko chaaho sponsor</b> kar sakte ho — koi limit nahi.</div>`},
+ {k:'5 levels, 7% each',say:'Tumhe apne sponsor-tree ke <b>5 level</b> tak, har level ki <b>BPI ka 7%</b> milta hai. Total <b>35%</b> tak.',
+  html:()=>`<h2>5 levels × 7%</h2>${mentorRingHTML()}`},
+ {k:'Level ka matlab',say:'Level 1 = jinko <b>tumne</b> sponsor kiya. Level 2 = jinko <b>unhone</b> sponsor kiya. Aise 5 level tak.',
+  html:`<h2>Kaunsa level kya</h2>
+   <table class="t"><thead><tr><th>Level</th><th>Kaun</th><th>Kitna</th></tr></thead><tbody>
+   <tr><td><b>1</b></td><td>Jinko <b>tumne direct</b> sponsor kiya</td><td style="color:#4ade80">7% of BPI</td></tr>
+   <tr><td><b>2</b></td><td>Jinko <b>unhone</b> sponsor kiya</td><td style="color:#4ade80">7%</td></tr>
+   <tr><td><b>3</b></td><td>Level-2 walon ke sponsees</td><td style="color:#4ade80">7%</td></tr>
+   <tr><td><b>4</b></td><td>Level-3 walon ke sponsees</td><td style="color:#4ade80">7%</td></tr>
+   <tr><td><b>5</b></td><td>Level-4 walon ke sponsees (last)</td><td style="color:#4ade80">7%</td></tr>
+   </tbody></table>
+   <div class="note ok"><span class="l">Total</span>5 × 7% = <b>35%</b> · aur ye <b>capping-free</b> hai — koi upar ki limit nahi.</div>`},
+ {k:'Chain break rule',say:'Ek trap hai — agar tumhare sponsee ke neeche kisi ko <b>kisi aur ne</b> sponsor kiya, to wo tumhari chain me <b>nahi</b> aata.',
+  html:`<h2>⚠️ Chain break — dhyan rakhna</h2>
+   <div class="note wa"><span class="l">Rule</span>Sirf wahi chain tumhari levels me ginegi jo <b>genuinely tumhari sponsorship</b> se neeche bani ho. Beech me kisi aur ka sponsor aa gaya to <b>wahi chain toot jaati hai</b>.</div>
+   <div class="note ru"><span class="l">Isliye</span>Apni team ko sponsor karna sikhana — team jitna sponsor karegi, tumhari 5 levels utni gehri aur bhari hongi.</div>`},
+];
+
+/* =======================================================================
+   DECK: ACHIEVERS
+   ======================================================================= */
+let aLvl=4,aDone=1;
+function achCalcHTML(){
+  return `<h2>🧮 Kitna milega — khud dekho</h2>
+   <p class="lead">Achiever ko uske <b>aakhri 3 qualified levels</b> ka pool milta hai.</p>
+   <div class="ctl">
+     <label class="mini">Achiever kis level pe hai</label>
+     <div class="seg" id="aLvlSeg"><button data-v="3">Level 3</button><button data-v="4" class="on">Level 4</button><button data-v="5">Level 5</button></div>
+     <div style="height:9px"></div>
+     <label class="mini">Us top level ka criteria complete kiya?</label>
+     <div class="seg" id="aDoneSeg"><button data-v="1" class="on">Haan</button><button data-v="0">Nahi</button></div>
+   </div>
+   <div id="aOut"></div>`;
+}
+function achWire(){
+  const calc=()=>{
+    const L=[]; for(let l=aLvl-2;l<=aLvl;l++){ if(l<1)continue; if(l===aLvl&&!aDone)continue; L.push(l); }
+    const total=L.reduce((s,l)=>s+ACH_PER[l],0);
+    $('aOut').innerHTML=`<div class="big">
+        <div class="stat pu"><div class="k">Kaunse levels</div><div class="v" style="font-size:1.4rem">${L.join(' + ')||'—'}</div></div>
+        <div class="arw2">=</div>
+        <div class="stat gd"><div class="k">Total milega</div><div class="v">${fmt(total)}</div><div class="n">PV</div></div>
+      </div>
+      <div class="note ${aDone?'ok':'wa'}"><span class="l">Hisaab</span>${L.map(l=>fmt(ACH_PER[l])).join(' + ')||'kuch nahi'} = <b>${fmt(total)} PV</b>${!aDone?` · top level ka criteria adhoora hai isliye <b>Level ${aLvl} nahi gina</b>.`:''}</div>`;
+    say('Result',`Level <b>${aLvl}</b> pe, criteria <b>${aDone?'complete':'incomplete'}</b> → milenge <b>Level ${L.join(' + ')||'—'}</b> = <span class="gd">${fmt(total)} PV</span>.`);
+  };
+  const seg=(id,cb)=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(+b.dataset.v);};
+  seg('aLvlSeg',v=>{aLvl=v;calc();}); seg('aDoneSeg',v=>{aDone=v;calc();}); calc();
+}
+const DECK_ACH=[
+ {k:'Achievers kya hai',say:'Ye sabse upar ka reward hai — <b>rank</b> milta hai, <b>tour</b> milta hai, aur company ke <b>poore mahine ke turnover</b> me se hissa milta hai.',
+  html:`<h2>🏆 Achievers Incentive &amp; Recognition</h2>
+   <p class="lead">Left org + Right org me <b>PV target</b> pura karo, monthly direct-team-sales maintain karo — rank aur reward dono milega. (Pool company ke <b>PV + GV</b> pe banta hai.)</p>
+   <div class="arrowrow">
+     <div class="stat cy"><div class="k">Org-1 PV</div><div class="v">Target</div></div>
+     <div class="arw2">+</div>
+     <div class="stat am"><div class="k">Org-2 PV</div><div class="v">Target</div></div>
+     <div class="arw2">+</div>
+     <div class="stat pu"><div class="k">Direct team/mo</div><div class="v">Target</div></div>
+     <div class="arw2">=</div>
+     <div class="stat gd"><div class="k">Rank + Reward</div><div class="v">🏆</div></div>
+   </div>`},
+ {k:'5 ranks',say:'Paanch ranks hain — Silver se Crown Director tak. Har rank pe PV target badhta hai, aur reward bhi.',
+  html:`<h2>5 Ranks</h2>
+   <table class="t"><thead><tr><th>Lv</th><th>Rank</th><th>Left PV</th><th>Right PV</th><th>Direct Team / mo</th><th>Reward</th><th>% turnover</th></tr></thead><tbody>
+   <tr class="hl"><td>1</td><td><b>Silver Director</b></td><td>1,00,000</td><td>1,00,000</td><td>5,000</td><td>3N4D Goa</td><td>15%</td></tr>
+   <tr><td>2</td><td><b>Gold Director</b></td><td>5,00,000</td><td>5,00,000</td><td>25,000</td><td>Domestic Tour</td><td>10%</td></tr>
+   <tr><td>3</td><td><b>Platinum Director</b></td><td>25,00,000</td><td>25,00,000</td><td>50,000</td><td>Intl. + 2% car fund</td><td>8%</td></tr>
+   <tr><td>4</td><td><b>Diamond Director</b></td><td>50,00,000</td><td>50,00,000</td><td>1,00,000</td><td>International Tour</td><td>7%</td></tr>
+   <tr><td>5</td><td><b>Crown Director</b></td><td>2,00,00,000</td><td>2,00,00,000</td><td>2,00,000</td><td>Family Tour + 3% house fund</td><td>7%</td></tr>
+   </tbody></table>
+   <div class="note ok"><span class="l">Monthly vs one-time</span><b>Left PV aur Right PV har mahine</b> maintain karne hote hain. <b>Direct Team ka target sirf EK BAAR</b> — pehli baar us rank pe qualify karne ke liye. <b>Qualify hone ke baad aage Direct Team ki zaroorat nahi.</b></div>`},
+ {k:'Qualify PV se, pool PV+GV se',say:'Ek zaroori baat — achiever <b>PV se qualify</b> karta hai, par jab <b>distribution</b> hota hai to pool company ke <b>total PV + total GV</b> pe banta hai.',
+  html:`<h2>⚠️ Qualify vs Distribution — dono alag base</h2>
+   <div class="big">
+     <div class="stat cy"><div class="k">Qualify karne ke liye</div><div class="v" style="font-size:1.2rem">Sirf PV</div><div class="n">Org-1 / Org-2 / direct team ke PV target</div></div>
+     <div class="stat am"><div class="k">Pool banane ke liye</div><div class="v" style="font-size:1.2rem">PV + GV</div><div class="n">company ka poora month turnover</div></div>
+   </div>
+   <div class="note ru"><span class="l">Example</span>Mahine ke end me company ka <b>PV turnover</b> + <b>GV turnover</b> jodo — jo total bane, har rank ka % <b>usi total</b> pe lagega. Rank ke target PV se qualify hote ho, par paisa PV+GV ke total me se milta hai.</div>`},
+
+ {k:'Pool kaise banta',say:'Har rank ka ek <b>pool</b> banta hai = company ke (PV+GV) turnover ka wo %. Phir wo pool us rank ke <b>saare qualifiers me baant</b> diya jaata hai.',
+  html:`<h2>Pool ÷ Qualifiers</h2>
+   <p class="lead">Example: company ka mahine ka <b>PV + GV</b> turnover = <b>1,00,00,000</b>.</p>
+   <table class="t"><thead><tr><th>Level</th><th>Pool (% × turnover)</th><th>Qualifiers</th><th>Har ek ko</th></tr></thead><tbody>
+   <tr><td>1</td><td>15% = 15,00,000</td><td>÷ 50</td><td><b>30,000 PV</b></td></tr>
+   <tr><td>2</td><td>10% = 10,00,000</td><td>÷ 25</td><td><b>40,000 PV</b></td></tr>
+   <tr><td>3</td><td>8% = 8,00,000</td><td>÷ 15</td><td><b>53,333 PV</b></td></tr>
+   <tr><td>4</td><td>7% = 7,00,000</td><td>÷ 10</td><td><b>70,000 PV</b></td></tr>
+   <tr><td>5</td><td>7% = 7,00,000</td><td>÷ 4</td><td><b>1,75,000 PV</b></td></tr>
+   </tbody></table>
+   <div class="note ru"><span class="l">Note</span>Ye 1 crore = company ka <b>PV + GV</b> mila ke total. Jitne kam qualifiers, utna zyada per-person — isliye upar ke ranks me amount badi hoti hai.</div>`},
+ {k:'Last 3 levels ka rule',say:'Ab asli rule: achiever ko <b>ek nahi, aakhri 3 levels</b> ka pool milta hai. Level 4 pe ho to <b>2+3+4</b> milega.',
+  html:`<h2>"Last 3 levels" ka rule</h2>
+   <table class="t"><thead><tr><th>Case</th><th>Kaunse levels</th><th>Total</th></tr></thead><tbody>
+   <tr class="hl"><td><b>Level 4</b> tak gaya, L4 complete</td><td>2 + 3 + 4</td><td><b>40,000 + 53,333 + 70,000 = 1,63,333 PV</b> ✅</td></tr>
+   <tr><td><b>Level 5</b> tak gaya, L5 complete</td><td>3 + 4 + 5</td><td>53,333 + 70,000 + 1,75,000 = 2,98,333 PV</td></tr>
+   <tr class="bad"><td><b>Level 5</b> pe tha par criteria <b>nahi</b> kiya</td><td>sirf 3 + 4</td><td>1,23,333 PV</td></tr>
+   <tr class="bad"><td><b>Level 4</b> pe tha par criteria <b>nahi</b> kiya</td><td>sirf 2 + 3</td><td>93,333 PV</td></tr>
+   </tbody></table>
+   <div class="note ok"><span class="l">Verify</span>Pehla row <b>1,63,333 PV</b> — ye exactly wahi number hai jo original plan ke example me likha hai. Matlab rule sahi samjha gaya. ✅</div>`},
+ {k:'Khud try karo',say:'Buttons dabao — level aur criteria badal ke dekho kitna milega.',
+  html:achCalcHTML, after:achWire},
+ {k:'Payout terms',say:'Aakhri baat — closing <b>calendar month</b> ka hota hai, aur payout <b>10 din</b> ke andar.',
+  html:`<h2>Payout terms</h2>
+   <div class="big">
+     <div class="stat cy"><div class="k">Closing cycle</div><div class="v" style="font-size:1.2rem">Calendar month</div><div class="n">1st se last day</div></div>
+     <div class="stat gd"><div class="k">Payout</div><div class="v" style="font-size:1.2rem">10 din me</div></div>
+   </div>
+   <div class="note ru"><span class="l">Tours</span>Domestic/International tours me <b>hotel + food + conveyance</b> included. Goa tour me hotel+food hai par <b>conveyance nahi</b> (bus/railway/airport ka kharcha khud).</div>`},
+];
+
+/* =======================================================================
+   DECK: RULES
+   ======================================================================= */
+const DECK_RULES=[
+ {k:'4 tarah ke point',say:'Poore system ki jadh yahi hai — har purchase se <b>4 tarah ke point</b> bante hain.',
+  html:`<h2>📋 Point ke 4 type</h2>
+   <div class="big">
+     <div class="stat gd"><div class="k">1 · Self</div><div class="v" style="font-size:1.05rem">Sirf buyer ko</div><div class="n">income nahi — cap decide karta</div></div>
+     <div class="stat"><div class="k">2 · Direct</div><div class="v" style="font-size:1.05rem;color:#60a5fa">Sponsor ko</div><div class="n">Startup Incentive me</div></div>
+     <div class="stat pu"><div class="k">3 · Direct Team</div><div class="v" style="font-size:1.05rem">Poori direct team</div><div class="n">Achievers qualification me</div></div>
+     <div class="stat cy"><div class="k">4 · Team</div><div class="v" style="font-size:1.05rem">Har ancestor ko</div><div class="n">left/right — BPI matching me</div></div>
+   </div>
+   <div class="note ok"><span class="l">Confirm ho chuka</span><b>Buyer ko team point NAHI</b> milta — sirf self. Aur <b>sponsor ko team point BHI</b> milta hai (direct ke alawa).</div>
+   <div class="note ru"><span class="l">Naya</span><b>Direct Team</b> alag point hai — ye <b>Achievers</b> ki qualification me lagta hai, BPI matching me nahi. Team point left/right me bantta hai, Direct Team nahi.</div>`},
+ {k:'Billing rule',say:'Bill banane se pehle <b>customer ki unique ID</b> daalna zaroori hai — ID ke bina bill hi nahi banega.',
+  html:`<h2>Billing → Point</h2>
+   <div class="arrowrow">
+     <div class="stat pu"><div class="k">Step 1</div><div class="v" style="font-size:1.1rem">Unique ID</div><div class="n">ID bina bill nahi</div></div>
+     <div class="arw2">→</div>
+     <div class="stat cy"><div class="k">Step 2</div><div class="v" style="font-size:1.1rem">Product ka PV</div><div class="n">har product pe fix</div></div>
+     <div class="arw2">→</div>
+     <div class="stat gd"><div class="k">Step 3</div><div class="v" style="font-size:1.1rem">Point turant</div><div class="n">tree me distribute</div></div>
+   </div>`},
+ {k:'BPI ke rules',say:'BPI ke poore rules ek jagah — matching, capping, carry aur washout.',
+  html:`<h2>BPI · Matching &amp; Washout</h2>
+   <table class="t"><thead><tr><th>#</th><th>Rule</th></tr></thead><tbody>
+   <tr><td>1</td><td>Daily Left-Right matching, <b>1000 ke multiple</b> me, matched ka <b>80%</b> payout.</td></tr>
+   <tr><td>2</td><td>Matching <b>self-PV capping level</b> tak hi — cap se upar count nahi.</td></tr>
+   <tr class="hl"><td>3</td><td>Matching pehle <b>AAJ ka business</b> kharch karti hai, uske baad <b>purana carry</b>.</td></tr>
+   <tr class="hl"><td>4</td><td><b>Purana carry KABHI wash nahi hota</b> — jo bacha wo hamesha aage jaata hai.</td></tr>
+   <tr class="hl"><td>5</td><td>Sirf <b>aaj ke business ka bacha hua</b> hissa wash hota hai.</td></tr>
+   <tr class="hl"><td>6</td><td><b>Strong side</b> = jiska total (carry + aaj) bada · <b>Weak side</b> = jiska chhota.</td></tr>
+   <tr class="hl"><td>7</td><td><b>Weak side pe wash nahi hua → strong side pe bhi nahi hoga</b> — uska bacha hua bhi carry forward.</td></tr>
+   <tr><td>8</td><td><b>Matching na bane → washout bhi nahi</b>, dono side pura carry forward.</td></tr>
+   <tr><td>9</td><td>Wash-out <b>Left aur Right alag</b> track hota hai. Payout <b>Friday weekly</b>, history audit ke liye save.</td></tr>
+   </tbody></table>`},
+ {k:'Baaki incentives',say:'Baaki teen incentives ka short summary.',
+  html:`<h2>Startup · Mentor · Achievers</h2>
+   <table class="t"><thead><tr><th>Incentive</th><th>Kis pe</th><th>Kitna</th></tr></thead><tbody>
+   <tr><td><b>Startup</b></td><td>Direct PV milestones</td><td>3,000 → ₹2,100 · 10,000 → +₹3,000 (total 51%), one-time</td></tr>
+   <tr><td><b>Mentor's</b></td><td><b>Sponsor tree</b> (binary nahi)</td><td>5 levels × 7% of BPI = max 35%, capping-free</td></tr>
+   <tr><td><b>Achievers</b></td><td>Qualify <b>PV se</b> (Org1+Org2 + monthly direct)</td><td>Pool = company ke <b>PV+GV</b> ka % ÷ qualifiers · <b>aakhri 3 qualified levels</b></td></tr>
+   </tbody></table>
+   <div class="note ok"><span class="l">Capping levels</span>8 levels — Self PV 250 se shuru (cap 1,000 PV/day) aur 5,000 PV tak (cap 12,000 PV/day). 250 se kam = koi payout nahi.</div>`},
+ {k:'Ab confirm ho chuka',say:'Ye saari cheezein ab <b>clear</b> ho chuki hain — inme koi confusion nahi.',
+  html:`<h2>✅ Confirm ho chuka</h2>
+   <table class="t"><thead><tr><th>Sawaal</th><th>Jawab</th></tr></thead><tbody>
+   <tr><td>Point kitne type ke?</td><td><b>4</b> — Self · Direct · Direct Team · Team</td></tr>
+   <tr><td>Buyer ko team point?</td><td><b>Nahi</b> — sirf self point</td></tr>
+   <tr><td>Sponsor ko team point?</td><td><b>Haan</b> — Direct ke alawa team bhi</td></tr>
+   <tr><td>Matching ka order?</td><td>Pehle <b>AAJ ka business</b>, phir <b>purana carry</b></td></tr>
+   <tr><td>Purana carry wash hota?</td><td><b>Kabhi nahi</b> — hamesha aage jaata hai</td></tr>
+   <tr><td>Wash kis pe lagta?</td><td>Sirf <b>aaj ke business ka bacha hua</b> hissa</td></tr>
+   <tr><td>Strong / weak?</td><td>Total (carry + aaj) se decide — <b>rule chalu hai</b></td></tr>
+   <tr><td>Weak pe wash nahi hua to?</td><td><b>Strong pe bhi nahi</b> hoga</td></tr>
+   <tr><td>Startup Incentive pe time limit?</td><td><b>Haan</b> — activation date se window (example 180 din)</td></tr>
+   <tr><td>Achievers me kaunse levels?</td><td><b>Aakhri 3 qualified</b> (L4→2,3,4 · L5→3,4,5)</td></tr>
+   <tr><td>Achievers qualify vs pool?</td><td>Qualify <b>PV</b> se · pool <b>PV+GV</b> se</td></tr>
+   <tr><td>Wash-out L/R?</td><td><b>Alag-alag</b> track</td></tr>
+   </tbody></table>`},
+ {k:'Sab confirm ho chuka',say:'Ye saari cheezein ab sir se <b>confirm ho chuki</b> hain — demo me ye bata dena.',
+  html:`<h2>✅ Last meeting me confirm hua</h2>
+   <table class="t"><thead><tr><th>Sawaal</th><th>Jawab</th></tr></thead><tbody>
+   <tr><td>Matching ka order</td><td>Pehle <b>AAJ ka business</b>, phir purana carry</td></tr>
+   <tr><td>Purana carry wash?</td><td><b>Kabhi nahi</b></td></tr>
+   <tr><td>Wash kis pe?</td><td>Sirf <b>aaj ke business ka bacha hua</b></td></tr>
+   <tr><td>Strong / weak rule?</td><td><b>Chalu hai</b> — total (carry + aaj) se decide. Weak pe wash nahi → strong pe bhi nahi</td></tr>
+   <tr><td>Point kitne type?</td><td><b>4</b> — Self · Direct · Direct Team · Team</td></tr>
+   <tr><td>Startup ki time limit?</td><td><b>Admin</b> jo chahe set kare (din ya mahine), baad me badal bhi sakta hai</td></tr>
+   <tr><td>Achievers ka Direct Team target?</td><td>Table me hai — <b>sirf ek baar</b> qualify karne ke liye</td></tr>
+   <tr><td>Bill cancel / stock return?</td><td><b>Poora flow reverse</b> — stock, commission, wallet sab</td></tr>
+   <tr><td>Payout?</td><td>Mahine me <b>1 baar</b> · <b>TDS 2%</b></td></tr>
+   </tbody></table>`},
+ {k:'Ye abhi baaki hai',say:'Bas ye do cheezein abhi define honi hain.',
+  html:`<h2>🔶 Abhi baaki</h2>
+   <div class="note op"><span class="l">1 · CV ka use</span>PV ke rules poore clear hain. <b>GV</b> Achiever pool ke turnover me use hota hai. <b>CV</b> exactly kahan lagega — ye abhi define karna hai.</div>
+   <div class="note ru"><span class="l">2 · Cap-out vs washout</span>Dono alag mechanism hain — iska detail flow aana abhi baaki hai.</div>`},
+];
+
+/* =======================================================================
+   TAB ENGINE
+   ======================================================================= */
+const DECKS={bpi:DECK_BPI,cap:DECK_CAP,startup:DECK_START,mentor:DECK_MENTOR,achiever:DECK_ACH,rules:DECK_RULES};
+const INTRO={
+  bpi:['BPI Matching','Ye tab <b>BPI</b> samjhata hai — daily Left-Right matching, capping, carry forward aur washout. Aakhir me <b>live simulator</b> bhi hai.'],
+  cap:['Capping Levels','Yahan dekho ki <b>Self PV</b> tumhara daily cap kaise decide karti hai — 8 levels ke saath.'],
+  startup:['Startup Incentive','Naye member ka <b>one-time bonus</b> — direct PV ke 2 milestones pe.'],
+  mentor:['Mentor\'s Incentive','<b>Sponsor tree</b> pe chalne wala incentive — 5 levels, har level 7%, max 35%.'],
+  achiever:['Achievers','Ranks, tours aur company turnover me se hissa — plus "last 3 levels" ka rule.'],
+  rules:['Rules &amp; Open Qs','Poore module ke rules ek jagah, aur jo cheezein <b>abhi confirm karni hain</b> wo bhi.'],
+};
+let cur='flow';
+function show(){
+  stopPlay();
+  const isFlow=cur==='flow';
+  $('side').classList.toggle('hide',!isFlow);
+  if(isFlow){
+    mode='flow'; lastSay=null;
+    buildFlowSteps(); renderTree(false); syncSide();
+    say('Namaste 👋',`Main tumhara guide hoon. Buyer <b>${labelOf(selId)}</b> select hai — <b>Next ▶</b> ya <b>Auto play</b> dabao, main har step ek-ek karke samjhaunga. Zoom: ＋ / − ya mouse wheel, drag karke ghuma sakte ho.`);
+    return;
+  }
+  mode='deck'; steps=DECKS[cur]; stepIdx=-1; lastSay=null;
+  renderDeckShell();
+  const [t,d]=INTRO[cur];
+  say('Namaste 👋 · '+t, d+' <b>Next ▶</b> dabao ya <b>Auto play</b> chala do.');
+  runDeckStep(-1); syncStepUI();
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); cur=t.dataset.s; show();
+});
+$('buyBtn').onclick=()=>{stopPlay();buildFlowSteps();gotoFlowStep(-1);startPlay();};
+$('buyerSel').onchange=e=>pick(+e.target.value);
+$('sponsorSel').onchange=e=>{
+  const v=+e.target.value; nodes[selId].sponsor=v||null;
+  if(playing)stopPlay(); buildFlowSteps(); renderTree(true); syncSide(); gotoFlowStep(-1);
+  say('Sponsor badla',`<b>${labelOf(selId)}</b> ka sponsor ab <b>${v?labelOf(v):'koi nahi'}</b> hai. Purchase chala ke dekho — Direct point kahan jaata hai.`);
+};
+window.addEventListener('resize',()=>{ if(cur==='flow') renderTree(true); });
+show();
+</script>
+</body>
+</html>

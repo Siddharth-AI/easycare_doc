@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Product Module — UI Walkthrough</title>
+<style>
+:root{
+  --bg:#eef2f8;--panel:#fff;--soft:#f4f6fb;--line:#e6eaf2;--line2:#dbe1ec;
+  --txt:#1f2738;--txt2:#5a6678;--txt3:#94a0b3;
+  --brand:#2563eb;--brand2:#0891b2;--green:#16a34a;--amber:#d97706;--red:#dc2626;--violet:#7c3aed;
+  --shadow:0 6px 22px rgba(30,40,80,.08);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;}
+body{font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);
+  display:grid;grid-template-columns:250px 1fr;grid-template-rows:auto 1fr;grid-template-areas:"head head" "side main";height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+header{grid-area:head;background:linear-gradient(95deg,#2563eb,#0891b2);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;z-index:10;}
+header h1{margin:0;font-size:1.15rem;font-weight:800;}
+header .sub{font-size:.74rem;opacity:.9;font-weight:600;}
+.menuBtn{display:none;background:rgba(255,255,255,.2);border:none;color:#fff;width:38px;height:38px;border-radius:9px;font-size:1.1rem;cursor:pointer;}
+
+#side{grid-area:side;background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:16px 12px;}
+.sh{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--txt3);font-weight:800;padding:6px 12px;}
+.nav{width:100%;text-align:left;border:1px solid transparent;background:transparent;color:var(--txt2);padding:11px 13px;border-radius:11px;cursor:pointer;display:flex;gap:11px;align-items:center;margin-bottom:3px;font-size:.9rem;font-weight:600;}
+.nav:hover{background:var(--soft);color:var(--txt);}
+.nav.active{background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:color-mix(in srgb,var(--brand) 40%,transparent);color:var(--txt);}
+.nav .ic{width:30px;height:30px;border-radius:8px;background:color-mix(in srgb,var(--brand) 13%,transparent);display:flex;align-items:center;justify-content:center;font-size:1rem;}
+
+#main{grid-area:main;overflow:auto;scroll-behavior:smooth;}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 30px 100px;}
+.screen{margin-bottom:46px;scroll-margin-top:14px;}
+.shead{display:flex;align-items:center;gap:13px;margin-bottom:16px;}
+.step{flex-shrink:0;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#0891b2);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.shead h2{margin:0;font-size:1.45rem;letter-spacing:-.01em;}
+.shead p{margin:2px 0 0;color:var(--txt2);font-size:.92rem;}
+
+/* browser/app mock frame */
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+.frameTop{display:flex;align-items:center;gap:8px;padding:11px 16px;background:var(--soft);border-bottom:1px solid var(--line);}
+.frameTop .dot{width:11px;height:11px;border-radius:50%;}
+.d1{background:#ff5f57;}.d2{background:#febc2e;}.d3{background:#28c840;}
+.frameTop .url{margin-left:10px;font-size:.78rem;color:var(--txt3);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 12px;}
+.frameBody{padding:22px;}
+
+/* generic UI bits */
+.appbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.appbar h3{margin:0;font-size:1.1rem;}
+.btn{border:none;border-radius:9px;padding:9px 16px;font-weight:700;font-size:.85rem;cursor:default;}
+.btn.pri{background:var(--brand);color:#fff;} .btn.gr{background:var(--green);color:#fff;}
+.btn.gh{background:var(--soft);border:1px solid var(--line2);color:var(--txt2);}
+.row{display:flex;gap:16px;flex-wrap:wrap;}
+.fg{flex:1;min-width:150px;margin-bottom:14px;}
+.fg label{display:block;font-size:.74rem;font-weight:700;color:var(--txt2);margin-bottom:6px;}
+.inp{width:100%;border:1px solid var(--line2);border-radius:9px;padding:10px 12px;font-size:.88rem;color:var(--txt);background:var(--panel);}
+.inp.ph{color:var(--txt3);}
+.sel{position:relative;}
+.sel::after{content:"▾";position:absolute;right:12px;top:11px;color:var(--txt3);font-size:.8rem;}
+.block{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
+.block .bt{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{background:color-mix(in srgb,var(--brand) 11%,transparent);color:var(--brand);padding:6px 13px;border-radius:999px;font-size:.8rem;font-weight:600;}
+.chip.x::after{content:" ✕";opacity:.5;}
+.chip.add{background:var(--panel);border:1px dashed var(--line2);color:var(--txt3);}
+
+.uploads{display:flex;gap:12px;flex-wrap:wrap;}
+.thumb{width:84px;height:84px;border-radius:11px;background:linear-gradient(135deg,#dbeafe,#cffafe);display:flex;align-items:center;justify-content:center;font-size:1.6rem;position:relative;border:1px solid var(--line);}
+.thumb .main{position:absolute;top:5px;left:5px;background:var(--green);color:#fff;font-size:.56rem;font-weight:800;padding:2px 6px;border-radius:5px;}
+.thumb.up{background:var(--panel);border:1.5px dashed var(--line2);color:var(--txt3);font-size:.72rem;text-align:center;flex-direction:column;gap:3px;}
+
+table.t{width:100%;border-collapse:collapse;font-size:.86rem;}
+table.t th{text-align:left;color:var(--txt3);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line);}
+table.t td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--txt2);vertical-align:middle;}
+table.t tr:last-child td{border-bottom:none;}
+.pthumb{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#dbeafe,#cffafe);display:inline-flex;align-items:center;justify-content:center;font-size:1.1rem;vertical-align:middle;}
+.pill{padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;}
+.pill.ok{background:#dcfce7;color:#16a34a;} .pill.low{background:#fef3c7;color:#b45309;} .pill.out{background:#fee2e2;color:#b91c1c;}
+.tact{color:var(--brand);font-weight:700;font-size:.8rem;cursor:default;}
+.searchbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.searchbar .inp{flex:1;min-width:200px;}
+
+/* detail */
+.detail{display:grid;grid-template-columns:280px 1fr;gap:24px;}
+.gallery .big{width:100%;aspect-ratio:1;border-radius:14px;background:linear-gradient(135deg,#dbeafe,#cffafe);display:flex;align-items:center;justify-content:center;font-size:3.5rem;}
+.gallery .mini{display:flex;gap:8px;margin-top:10px;}
+.gallery .mini div{width:54px;height:54px;border-radius:9px;background:linear-gradient(135deg,#e0e7ff,#cffafe);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.detail .title{font-size:1.5rem;font-weight:800;margin:0;}
+.detail .muted{color:var(--txt3);font-size:.85rem;}
+.priceRow{display:flex;align-items:baseline;gap:12px;margin:14px 0;}
+.priceRow .now{font-size:1.8rem;font-weight:800;color:var(--brand);}
+.priceRow .mrp{color:var(--txt3);text-decoration:line-through;}
+.kv{display:flex;gap:24px;flex-wrap:wrap;margin:14px 0;}
+.kv div small{display:block;color:var(--txt3);font-size:.72rem;}
+.kv div b{font-size:1rem;}
+
+/* explanation card */
+.explain{margin-top:16px;background:linear-gradient(120deg,color-mix(in srgb,var(--brand) 7%,transparent),transparent);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:14px;padding:18px 20px;}
+.explain h4{margin:0 0 10px;font-size:1rem;display:flex;align-items:center;gap:8px;}
+.explain ul{margin:0;padding-left:20px;color:var(--txt2);line-height:1.75;font-size:.92rem;}
+.explain li{margin:5px 0;} .explain b{color:var(--txt);}
+
+.priceGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+.priceCard{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;}
+.priceCard small{display:block;color:var(--txt3);font-size:.68rem;font-weight:700;text-transform:uppercase;}
+.priceCard b{font-size:1.05rem;}
+.lvl1{border-left:3px solid #2563eb;}.lvl2{border-left:3px solid #0891b2;}.lvl3{border-left:3px solid #16a34a;}.lvlw{border-left:3px solid #7c3aed;}.lvlu{border-left:3px solid #d97706;}
+
+@media(max-width:1000px){
+  body{grid-template-columns:1fr;grid-template-areas:"head" "main";}
+  #side{position:fixed;top:64px;left:0;bottom:0;width:250px;z-index:30;transform:translateX(-105%);transition:.25s;box-shadow:0 0 40px rgba(0,0,0,.25);}
+  #side.open{transform:none;}.menuBtn{display:block;}
+  .detail{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<header>
+  <button class="menuBtn" id="menuBtn">☰</button>
+  <div><h1>🛍️ Product Module</h1><div class="sub">UI Walkthrough · client ke liye</div></div>
+</header>
+
+<nav id="side">
+  <div class="sh">Screens</div>
+  <button class="nav active" data-t="s1"><span class="ic">📂</span> Categories</button>
+  <button class="nav" data-t="s2"><span class="ic">➕</span> Add Product</button>
+  <button class="nav" data-t="s3"><span class="ic">📋</span> Product List</button>
+  <button class="nav" data-t="s4"><span class="ic">🔎</span> Product Detail</button>
+  <button class="nav" data-t="s5"><span class="ic">📦</span> Stock / Inventory</button>
+</nav>
+
+<main id="main"><div class="wrap">
+
+<!-- ===== 1 CATEGORIES ===== -->
+<section class="screen" id="s1">
+  <div class="shead"><div class="step">1</div><div><h2>Categories banao</h2><p>Products ko group/organize karne ke liye categories</p></div></div>
+  <div class="frame">
+    <div class="frameTop"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="url">admin / categories</span></div>
+    <div class="frameBody">
+      <div class="appbar"><h3>📂 Categories</h3><button class="btn pri">+ Add Category</button></div>
+      <div class="row">
+        <div style="flex:1.4;min-width:260px">
+          <div class="block" style="margin:0">
+            <div class="bt">📁 Category list</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;">
+                <span>🌾 <b>Agriculture</b> <span class="chip" style="margin-left:6px">Ag</span></span><span class="tact">Edit</span></div>
+              <div style="margin-left:22px;display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;background:var(--soft);border-radius:9px;padding:8px 13px;font-size:.88rem;"><span>↳ Insecticide</span><span class="tact">Edit</span></div>
+                <div style="display:flex;justify-content:space-between;background:var(--soft);border-radius:9px;padding:8px 13px;font-size:.88rem;"><span>↳ Fungicide</span><span class="tact">Edit</span></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;">
+                <span>🌱 <b>Seeds</b> <span class="chip" style="margin-left:6px">Sd</span></span><span class="tact">Edit</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:230px">
+          <div class="block" style="margin:0">
+            <div class="bt">✏️ New category</div>
+            <div class="fg"><label>Category name</label><div class="inp ph">e.g. Agriculture</div></div>
+            <div class="fg"><label>Short code</label><div class="inp ph">e.g. Ag</div></div>
+            <div class="fg"><label>Image</label><div class="thumb up" style="width:70px;height:70px">⬆<br>upload</div></div>
+            <button class="btn gr" style="width:100%">Save category</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="explain">
+    <h4>📝 Is screen me kya hota hai</h4>
+    <ul>
+      <li><b>Category</b> = product ka bada group (jaise Agriculture, Seeds). Har category ka ek chhota <b>short code</b> hota hai jo product ke code me lagta hai.</li>
+      <li>Category ke andar <b>sub-category</b> ban sakti (Agriculture → Insecticide, Fungicide).</li>
+      <li>Jitni chahe category/sub-category bana sakte ho — products inhi me organize honge.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 2 ADD PRODUCT ===== -->
+<section class="screen" id="s2">
+  <div class="shead"><div class="step">2</div><div><h2>Naya Product add karo</h2><p>Ek product ki saari details — ek hi form me</p></div></div>
+  <div class="frame">
+    <div class="frameTop"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="url">admin / products / new</span></div>
+    <div class="frameBody">
+      <div class="appbar"><h3>➕ Add Product</h3><button class="btn gr">✓ Save Product</button></div>
+
+      <div class="block"><div class="bt">📋 Basic info</div>
+        <div class="row">
+          <div class="fg"><label>Product name</label><div class="inp">Rakshak</div></div>
+          <div class="fg"><label>Company</label><div class="sel"><div class="inp">AgroCorp Ltd</div></div></div>
+        </div>
+        <div class="row">
+          <div class="fg"><label>Category</label><div class="sel"><div class="inp">Agriculture</div></div></div>
+          <div class="fg"><label>Sub-category</label><div class="sel"><div class="inp">Insecticide</div></div></div>
+          <div class="fg"><label>Disease / Pest (kis ke liye)</label><div class="sel"><div class="inp">Aphid / Sucking pest</div></div></div>
+        </div>
+        <div class="chips" style="margin-top:2px">
+          <span class="chip add" style="cursor:default">🏷️ Auto code: Ag-Rakshak123</span>
+          <span class="chip add" style="cursor:default">▦ QR (auto)</span>
+          <span class="chip add" style="cursor:default">||||| Barcode (auto)</span>
+        </div>
+      </div>
+
+      <div class="block"><div class="bt">🖼️ Product photos</div>
+        <div class="uploads">
+          <div class="thumb">🧴<span class="main">MAIN</span></div>
+          <div class="thumb">📦</div>
+          <div class="thumb up">⬆<br>add photo</div>
+        </div>
+      </div>
+
+      <div class="block"><div class="bt">📦 Packaging</div>
+        <div class="row">
+          <div class="fg"><label>Packaging type</label><div class="sel"><div class="inp">Bottle</div></div></div>
+          <div class="fg"><label>Unit</label><div class="sel"><div class="inp">ml</div></div></div>
+          <div class="fg"><label>Pack size</label><div class="inp">250</div></div>
+        </div>
+      </div>
+
+      <div class="block"><div class="bt">💰 Pricing</div>
+        <div class="row">
+          <div class="fg"><label>MRP (printed price)</label><div class="inp">₹1000</div></div>
+          <div class="fg"><label>Selling price (user)</label><div class="inp">₹800</div></div>
+          <div class="fg"><label>GST %</label><div class="inp">10%</div></div>
+        </div>
+        <div style="font-size:.72rem;font-weight:700;color:var(--txt2);margin:6px 0 8px;">Price for each level (franchise)</div>
+        <div class="priceGrid">
+          <div class="priceCard lvlw"><small>Mini-WH</small><b>₹685</b></div>
+          <div class="priceCard lvl1"><small>Level 1</small><b>₹700</b></div>
+          <div class="priceCard lvl2"><small>Level 2</small><b>₹725</b></div>
+          <div class="priceCard lvl3"><small>Level 3</small><b>₹750</b></div>
+          <div class="priceCard lvlu"><small>User</small><b>₹800</b></div>
+        </div>
+      </div>
+
+      <div class="block"><div class="bt">🎁 Reward points &nbsp;·&nbsp; 🌾 Suitable crops</div>
+        <div class="row">
+          <div class="fg"><label>PV</label><div class="inp">20</div></div>
+          <div class="fg"><label>GV</label><div class="inp">10</div></div>
+          <div class="fg"><label>NV</label><div class="inp">0</div></div>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>Crops (multiple)</label>
+          <div class="chips"><span class="chip x">Wheat</span><span class="chip x">Cotton</span><span class="chip add">+ add crop</span></div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-bottom:0"><div class="bt">📝 Description</div>
+        <div class="fg"><label>Short description (use)</label><div class="inp" style="height:auto">Sucking pests se fasal ki suraksha</div></div>
+        <div class="fg" style="margin-bottom:0"><label>Technical details</label><div class="inp ph">chemical formula / composition</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="explain">
+    <h4>📝 Is screen me kya hota hai</h4>
+    <ul>
+      <li>Ek product ki <b>poori details</b> ek hi form me: naam, company, category/sub-category, <b>disease/pest</b> (kis ke liye), photos, packaging, price, points, crops, description.</li>
+      <li><b>QR code + barcode + product code</b> apne-aap ban jaate (scan/track ke liye).</li>
+      <li><b>Photos</b> me ek ko "MAIN" mark karte — wahi product ki main image dikhegi.</li>
+      <li><b>Pricing</b> me MRP, user ka selling price, GST, aur har <b>level (franchise)</b> ka rate. Ye rate <b>har product ke apne</b> hote hain — system me fix nahi.</li>
+      <li><b>Billing ke waqt cost price change</b> ki ja sakti hai — bill usi cost pe banega. Yahan wali cost sirf default hai.</li>
+      <li><b>Crops</b> me ek product ko kai fasal ke liye tag kar sakte (Wheat, Cotton…).</li>
+      <li>Save dabate hi product ban jaata, aur uska code apne-aap ban jaata (category code + naam).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 3 PRODUCT LIST ===== -->
+<section class="screen" id="s3">
+  <div class="shead"><div class="step">3</div><div><h2>Product List (catalog)</h2><p>Saare products ek jagah — search, filter, edit</p></div></div>
+  <div class="frame">
+    <div class="frameTop"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="url">admin / products</span></div>
+    <div class="frameBody">
+      <div class="appbar"><h3>📋 All Products</h3><button class="btn pri">+ Add Product</button></div>
+      <div class="searchbar">
+        <div class="inp ph">🔍 Search product…</div>
+        <div class="sel" style="min-width:160px"><div class="inp">All categories</div></div>
+        <div class="sel" style="min-width:140px"><div class="inp">All companies</div></div>
+      </div>
+      <table class="t">
+        <tr><th></th><th>Product</th><th>Category</th><th>MRP</th><th>Selling</th><th>Stock</th><th></th></tr>
+        <tr><td><span class="pthumb">🧴</span></td><td><b>Rakshak</b><br><small style="color:var(--txt3)">Ag-Rakshak</small></td><td>Insecticide</td><td>₹1000</td><td>₹800</td><td><span class="pill ok">70 in stock</span></td><td><span class="tact">View · Edit</span></td></tr>
+        <tr><td><span class="pthumb">🌱</span></td><td><b>SuperGro</b><br><small style="color:var(--txt3)">Sd-SuperGro</small></td><td>Seeds</td><td>₹600</td><td>₹520</td><td><span class="pill low">18 low</span></td><td><span class="tact">View · Edit</span></td></tr>
+        <tr><td><span class="pthumb">🧪</span></td><td><b>FungoStop</b><br><small style="color:var(--txt3)">Ag-FungoStop</small></td><td>Fungicide</td><td>₹900</td><td>₹740</td><td><span class="pill out">Out of stock</span></td><td><span class="tact">View · Edit</span></td></tr>
+        <tr><td><span class="pthumb">🐛</span></td><td><b>PestAway</b><br><small style="color:var(--txt3)">Ag-PestAway</small></td><td>Insecticide</td><td>₹1200</td><td>₹980</td><td><span class="pill ok">340 in stock</span></td><td><span class="tact">View · Edit</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="explain">
+    <h4>📝 Is screen me kya hota hai</h4>
+    <ul>
+      <li>Saare products ki <b>list</b> — photo, naam, category, price aur <b>stock status</b> ek nazar me.</li>
+      <li>Upar se <b>search</b> ya category/company se <b>filter</b> kar sakte.</li>
+      <li>Stock badge rang se pata chalta — <b>green</b> (theek), <b>peela</b> (kam, reorder karo), <b>laal</b> (khatam).</li>
+      <li>Kisi bhi product ko <b>View / Edit</b> kar sakte.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 4 PRODUCT DETAIL ===== -->
+<section class="screen" id="s4">
+  <div class="shead"><div class="step">4</div><div><h2>Product Detail</h2><p>Ek product khol ke poori jaankari</p></div></div>
+  <div class="frame">
+    <div class="frameTop"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="url">admin / products / rakshak</span></div>
+    <div class="frameBody">
+      <div class="detail">
+        <div class="gallery">
+          <div class="big">🧴</div>
+          <div class="mini"><div>🧴</div><div>📦</div><div>🏷️</div></div>
+        </div>
+        <div>
+          <p class="title">Rakshak</p>
+          <p class="muted">Agriculture › Insecticide · AgroCorp Ltd</p>
+          <div class="priceRow"><span class="now">₹800</span><span class="mrp">₹1000</span><span class="pill ok">70 in stock</span></div>
+          <div class="kv">
+            <div><small>GST</small><b>10%</b></div>
+            <div><small>Packaging</small><b>Bottle · 250 ml</b></div>
+            <div><small>Targets (pest)</small><b>Aphid / Sucking pest</b></div>
+            <div><small>Points</small><b>PV 20 · GV 10</b></div>
+          </div>
+          <div style="margin:14px 0"><small style="color:var(--txt3);font-size:.72rem;font-weight:700;text-transform:uppercase">Suitable crops</small>
+            <div class="chips" style="margin-top:6px"><span class="chip">Wheat</span><span class="chip">Cotton</span></div>
+          </div>
+          <div style="margin-top:8px"><small style="color:var(--txt3);font-size:.72rem;font-weight:700;text-transform:uppercase">Description</small>
+            <p style="margin:6px 0;color:var(--txt2)">Sucking pests se fasal ki suraksha. Aphid, jassid aur white-fly control ke liye.</p>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:10px"><button class="btn pri">✏️ Edit</button><button class="btn gh">📦 Add stock</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="explain">
+    <h4>📝 Is screen me kya hota hai</h4>
+    <ul>
+      <li>Ek product ki <b>poori jaankari</b> ek page pe — photos, price, GST, packaging, points, crops, description.</li>
+      <li>Yahin se seedha <b>Edit</b> ya <b>Add stock</b> kar sakte.</li>
+      <li>User ko bhi product aisa hi dikhega (price + photos + description).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 5 STOCK ===== -->
+<section class="screen" id="s5">
+  <div class="shead"><div class="step">5</div><div><h2>Stock / Inventory</h2><p>Stock aana, bikna, bachna — batch ke saath</p></div></div>
+  <div class="frame">
+    <div class="frameTop"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="url">admin / products / rakshak / stock</span></div>
+    <div class="frameBody">
+      <div class="appbar"><h3>📦 Stock — Rakshak</h3><span class="pill ok" style="font-size:.85rem">Total: 70 units</span></div>
+
+      <div class="block"><div class="bt">➕ Naya stock aaya (batch)</div>
+        <div class="row">
+          <div class="fg"><label>Batch no.</label><div class="inp">B2406</div></div>
+          <div class="fg"><label>Mfg date</label><div class="inp">10 Jan 2026</div></div>
+          <div class="fg"><label>Expiry date</label><div class="inp">09 Jan 2028</div></div>
+          <div class="fg"><label>Quantity aaya</label><div class="inp">30</div></div>
+          <div class="fg" style="display:flex;align-items:flex-end"><button class="btn gr" style="width:100%">+ Add stock</button></div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-bottom:0"><div class="bt">📊 Stock ledger</div>
+        <table class="t">
+          <tr><th>Batch</th><th>Aaya</th><th>Pichla</th><th>Total</th><th>Bacha</th></tr>
+          <tr><td><b>B2406</b></td><td>100</td><td>0</td><td>100</td><td><b>90</b></td></tr>
+          <tr><td><b>B2406</b></td><td>30</td><td>90</td><td>120</td><td><b>70</b></td></tr>
+        </table>
+        <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:10px;align-items:center;">
+          <span style="color:var(--txt2);font-size:.85rem">Total available abhi</span>
+          <span class="pill ok" style="font-size:1rem;padding:6px 16px">70 units</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="explain">
+    <h4>📝 Is screen me kya hota hai</h4>
+    <ul>
+      <li>Stock <b>batch</b> me aata hai — har batch ka <b>number</b>, <b>banne ki date</b> aur <b>expiry date</b>.</li>
+      <li>Hisaab simple: <b>Pichla + Aaya = Total</b>, phir jitna bika utna minus → <b>Bacha</b>.</li>
+      <li>Example: pehle <b>100 aaya</b> (pichla 0 → total 100), usme se <b>10 bika → 90 bacha</b>. Phir <b>30 aur aaya</b> (pichla 90 → total 120), usme se <b>50 bika → 70 bacha</b>.</li>
+      <li><b>Total available abhi = 70</b> — yahi stock product list me dikhta.</li>
+      <li>Bechte waqt <b>jiski expiry pehle</b> wo batch pehle jaata (kuch kharab na ho).</li>
+      <li>Stock kam ho to system <b>alert</b> deta — reorder ke liye.</li>
+    </ul>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+const navs=[...document.querySelectorAll('.nav')], main=document.getElementById('main');
+navs.forEach(n=>n.onclick=()=>{const el=document.getElementById(n.dataset.t);
+  main.scrollTo({top:el.offsetTop-6,behavior:'smooth'});
+  document.getElementById('side').classList.remove('open');});
+const secs=[...document.querySelectorAll('.screen')];
+main.addEventListener('scroll',()=>{let cur=secs[0].id;
+  for(const s of secs){if(main.scrollTop>=s.offsetTop-120)cur=s.id;}
+  navs.forEach(n=>n.classList.toggle('active',n.dataset.t===cur));},{passive:true});
+document.getElementById('menuBtn').onclick=()=>document.getElementById('side').classList.toggle('open');
+</script>
+</body>
+</html>

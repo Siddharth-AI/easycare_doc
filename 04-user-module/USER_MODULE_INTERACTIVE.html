@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>User Module — Binary Tree (Interactive)</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#131a2c;--panel2:#0f1626;--line:#243049;--line2:#2f3d5c;
+  --txt:#e9eefb;--txt2:#a3b1cc;--txt3:#6b7c9c;
+  --mother:#a855f7;--left:#22d3ee;--right:#f59e0b;--sel:#4ade80;
+  --shadow:0 10px 34px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{font-family:'Inter','Segoe UI',system-ui,Arial,sans-serif;background:
+  radial-gradient(1000px 500px at 80% -10%,rgba(168,85,247,.10),transparent),
+  radial-gradient(900px 450px at 0% 0%,rgba(34,211,238,.08),transparent),var(--bg);
+  color:var(--txt);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+header{padding:12px 22px;background:rgba(19,26,44,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+header h1{margin:0;font-size:1.05rem;font-weight:800;color:#e6d5ff;}
+.tabs{display:flex;gap:5px;background:var(--panel2);padding:4px;border-radius:11px;border:1px solid var(--line);}
+.tab{border:none;background:transparent;color:var(--txt2);padding:7px 15px;border-radius:8px;font-weight:700;font-size:.84rem;cursor:pointer;}
+.tab.on{background:var(--mother);color:#fff;}
+.grow{flex:1;}
+.legend{display:flex;gap:14px;align-items:center;font-size:.76rem;color:var(--txt3);flex-wrap:wrap;}
+.legend b{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--txt2);}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+.dot.m{background:var(--mother);} .dot.l{background:var(--left);} .dot.r{background:var(--right);}
+
+.wrap{flex:1;display:flex;min-height:0;}
+#stage{flex:1.6;min-width:0;padding:0;overflow:auto;position:relative;background:
+  linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px) 0 0/26px 26px,
+  linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px) 0 0/26px 26px;}
+#side{width:410px;flex-shrink:0;border-left:1px solid var(--line);padding:20px 22px;overflow:auto;background:rgba(15,22,38,.55);}
+
+/* svg tree */
+svg{display:block;}
+.link{stroke:var(--line2);stroke-width:2.5;fill:none;}
+.link.lft{stroke:rgba(34,211,238,.55);} .link.rgt{stroke:rgba(245,158,11,.5);}
+.nd{cursor:pointer;}
+.nd circle{stroke-width:3;transition:.2s;}
+.nd.m circle{fill:#2a1846;stroke:var(--mother);}
+.nd.l circle{fill:#0e2a33;stroke:var(--left);}
+.nd.r circle{fill:#33260c;stroke:var(--right);}
+.nd.sel circle{stroke:var(--sel);filter:drop-shadow(0 0 8px rgba(74,222,128,.7));}
+.nd text{fill:#fff;font-weight:800;font-size:14px;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.nd .tag{font-size:9px;fill:var(--txt3);font-weight:700;}
+.slot{fill:rgba(255,255,255,.03);stroke-dasharray:4 4;stroke-width:2;cursor:pointer;transition:.2s;}
+.slot.l{stroke:rgba(34,211,238,.5);} .slot.r{stroke:rgba(245,158,11,.45);}
+.slot:hover{fill:rgba(255,255,255,.08);}
+.slot-t{fill:var(--txt3);font-size:16px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+
+/* side */
+.kick{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd;font-weight:800;margin-bottom:8px;}
+#title{font-size:1.3rem;font-weight:800;margin:0 0 12px;color:#fff;line-height:1.25;}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.st{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center;box-shadow:var(--shadow);}
+.st .v{font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;}
+.st .l{font-size:.64rem;color:var(--txt3);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.st.tot .v{color:#e9d5ff;} .st.lf .v{color:#67e8f9;} .st.rt .v{color:#fcd34d;}
+
+.selbox{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:14px;}
+.selbox .h{font-size:.72rem;color:var(--txt3);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.selbox .who{font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:10px;}
+.addrow{display:flex;gap:9px;}
+.addrow button{flex:1;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:.86rem;cursor:pointer;}
+.addL{background:linear-gradient(90deg,#0891b2,#22d3ee);color:#04121e;}
+.addR{background:linear-gradient(90deg,#d97706,#f59e0b);color:#1a1200;}
+.addrow button:disabled{opacity:.3;cursor:not-allowed;filter:grayscale(.4);}
+.tip{font-size:.82rem;color:var(--txt3);margin-top:10px;line-height:1.6;}
+
+#body{font-size:.98rem;line-height:1.75;color:var(--txt2);}
+#body b{color:#fde68a;} #body .hi{color:#67e8f9;font-weight:700;} #body .hr{color:#fcd34d;font-weight:700;}
+.box{border-radius:11px;padding:12px 15px;margin:12px 0;border-left:3px solid;font-size:.92rem;}
+.box.rule{background:rgba(168,85,247,.1);border-color:var(--mother);}
+.box.warn{background:rgba(245,158,11,.1);border-color:#f59e0b;}
+.box .l{font-weight:800;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.box.rule .l{color:#c4b5fd;} .box.warn .l{color:#fcd34d;}
+
+/* concept / rules panels */
+.panel{padding:26px 30px;overflow:auto;max-width:1000px;}
+.panel h2{color:#e6d5ff;font-size:1.5rem;margin:0 0 6px;}
+.panel .sub{color:var(--txt3);margin:0 0 20px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+.idcard{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:15px;padding:18px 20px;box-shadow:var(--shadow);}
+.idcard .t{font-size:1.15rem;font-weight:800;margin-bottom:4px;}
+.idcard.u .t{color:#67e8f9;} .idcard.s .t{color:#fcd34d;}
+.idcard ul{margin:10px 0 0;padding-left:18px;color:var(--txt2);font-size:.92rem;line-height:1.7;}
+.idcard li::marker{color:var(--mother);}
+.panel table{width:100%;border-collapse:collapse;font-size:.92rem;margin:10px 0;}
+.panel th{background:var(--panel2);color:#c4b5fd;text-align:left;padding:10px 12px;border:1px solid var(--line2);font-size:.75rem;text-transform:uppercase;}
+.panel td{padding:10px 12px;border:1px solid var(--line);color:var(--txt2);}
+.panel td b{color:#fff;}
+.panel h3{color:#e6d5ff;margin:22px 0 8px;}
+@media(max-width:1150px){.wrap{flex-direction:column;}#side{width:auto;border-left:none;border-top:1px solid var(--line);}.two{grid-template-columns:1fr;}}
+
+footer{padding:11px 22px;background:rgba(19,26,44,.8);border-top:1px solid var(--line);display:flex;gap:11px;align-items:center;flex-wrap:wrap;}
+button.nav{border:none;border-radius:10px;padding:10px 18px;font-weight:800;font-size:.9rem;cursor:pointer;}
+#demo{background:#16a34a;color:#03130a;} #reset{background:#475569;color:#fff;}
+.hintbar{font-size:.82rem;color:var(--txt3);}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌳 User Module — Binary Tree</h1>
+  <div class="tabs">
+    <button class="tab on" data-s="tree">🌳 Live Tree</button>
+    <button class="tab" data-s="concept">🆔 Sponsor vs Union</button>
+    <button class="tab" data-s="rules">📋 Rules</button>
+  </div>
+  <div class="grow"></div>
+  <div class="legend">
+    <b><span class="dot m"></span>Mother</b>
+    <b><span class="dot l"></span>Left leg</b>
+    <b><span class="dot r"></span>Right leg</b>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="stage"></div>
+  <div id="side">
+    <div class="kick">Interactive</div>
+    <h2 id="title">Binary Tree banao</h2>
+    <div class="stat">
+      <div class="st tot"><div class="v" id="sTot">1</div><div class="l">Total</div></div>
+      <div class="st lf"><div class="v" id="sLeft">0</div><div class="l">Left team</div></div>
+      <div class="st rt"><div class="v" id="sRight">0</div><div class="l">Right team</div></div>
+    </div>
+    <div class="selbox">
+      <div class="h">Selected node</div>
+      <div class="who" id="selWho">Mother ID (root)</div>
+      <div class="addrow">
+        <button class="addL" id="btnL">◀ Add Left</button>
+        <button class="addR" id="btnR">Add Right ▶</button>
+      </div>
+      <div class="tip" id="selTip">Kisi node pe click karo → phir Left / Right leg me member jodo. Ya neeche wale khaali (dashed) slot pe seedha click karo.</div>
+    </div>
+    <div id="body"></div>
+  </div>
+</div>
+
+<footer>
+  <button class="nav" id="demo">▶ Demo bharo</button>
+  <button class="nav" id="reset">↻ Reset</button>
+  <span class="hintbar">Left wale ka left, right wale ka right — do leg, infinite depth.</span>
+</footer>
+
+<script>
+/* ---------------- data ---------------- */
+let nodes, nextId, selId;
+function init(){
+  nodes = {1:{id:1, left:null, right:null, parent:null, side:'root'}};
+  nextId = 2; selId = 1;
+}
+init();
+
+function add(parentId, side){
+  const p=nodes[parentId];
+  if(!p || p[side]) return;         // occupied leg — skip
+  const id=nextId++;
+  nodes[id]={id, left:null, right:null, parent:parentId, side};
+  p[side]=id;
+  selId=id;
+  render();
+}
+// EXTREME-CHAIN RULE: left placement always drills left→left→left... from the
+// sponsor until an empty left slot is found; right drills right→right→right...
+// Doosri-side branches beech me aane wale ignore hote hain.
+function extremeParent(refId, side){
+  let cur=nodes[refId];
+  while(cur[side]) cur=nodes[cur[side]];
+  return cur.id;
+}
+function placeExtreme(side){
+  add(extremeParent(selId, side), side);
+}
+function subtreeCount(id){
+  if(!id) return 0;
+  return 1 + subtreeCount(nodes[id].left) + subtreeCount(nodes[id].right);
+}
+
+/* ---------------- layout (in-order x) ---------------- */
+const RX=170, RY=96, PAD=60, R=24;   // column gap, row gap, padding, radius
+function layout(){
+  const pos={}; let col=0, maxD=0;
+  (function walk(id,d){
+    const n=nodes[id];
+    if(n.left) walk(n.left,d+1);
+    pos[id]={col:col++, d}; maxD=Math.max(maxD,d);
+    if(n.right) walk(n.right,d+1);
+  })(1,0);
+  return {pos, cols:col, maxD};
+}
+
+/* ---------------- render tree ---------------- */
+const stage=document.getElementById('stage');
+let recenter=false;
+function renderTree(){
+  const {pos, cols, maxD}=layout();
+  const W=Math.max(stage.clientWidth||900, PAD*2 + Math.max(cols,1)*RX);
+  const H=Math.max(stage.clientHeight||600, PAD*2 + (maxD+1)*RY + 60);
+  const X=id=>PAD + pos[id].col*RX + RX/2;
+  const Y=id=>PAD + pos[id].d*RY + 30;
+
+  let links='', slots='', nds='';
+  for(const id in nodes){
+    const n=nodes[id];
+    // links to existing children
+    ['left','right'].forEach(side=>{
+      if(n[side]){
+        const c=n[side], cls=side==='left'?'lft':'rgt';
+        links+=`<path class="link ${cls}" d="M${X(id)} ${Y(id)+R} C ${X(id)} ${Y(id)+RY/2}, ${X(c)} ${Y(c)-RY/2}, ${X(c)} ${Y(c)-R}"/>`;
+      }
+    });
+    // node
+    const cls=n.side==='root'?'m':n.side==='left'?'l':'r';
+    const label=n.side==='root'?'M':('U'+n.id);
+    nds+=`<g class="nd ${cls} ${+id===selId?'sel':''}" onclick="pick(${id})">
+      <circle cx="${X(id)}" cy="${Y(id)}" r="${R}"></circle>
+      <text x="${X(id)}" y="${Y(id)}">${label}</text>
+      <text class="tag" x="${X(id)}" y="${Y(id)-R-7}" text-anchor="middle">${n.side==='root'?'Mother':'ID '+n.id}</text>
+    </g>`;
+  }
+  // empty slots = where the NEXT left/right placement from the selected sponsor
+  // will actually land (extreme-chain drill), not necessarily under selId itself.
+  ['left','right'].forEach(side=>{
+    const tid=extremeParent(selId, side);
+    const dx=side==='left'?-RX*0.5:RX*0.5;
+    const sx=X(tid)+dx, sy=Y(tid)+RY*0.7;
+    slots+=`<line class="link ${side==='left'?'lft':'rgt'}" x1="${X(tid)}" y1="${Y(tid)+R}" x2="${sx}" y2="${sy-R}" style="opacity:.5"/>`;
+    slots+=`<g onclick="add(${tid},'${side}')"><circle class="slot ${side==='left'?'l':'r'}" cx="${sx}" cy="${sy}" r="${R-2}"/><text class="slot-t" x="${sx}" y="${sy}">+</text><text class="tag" x="${sx}" y="${sy+R+11}" text-anchor="middle">${side}</text></g>`;
+  });
+  stage.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${links}${slots}${nds}</svg>`;
+  if(recenter){ stage.scrollLeft = Math.max(0, X(1) - stage.clientWidth/2); recenter=false; }
+}
+function pick(id){ selId=id; render(); }
+window.add=add; window.pick=pick;
+
+/* ---------------- side + stats ---------------- */
+function render(rc){
+  recenter = !!rc;
+  renderTree();
+  document.getElementById('sTot').textContent  = subtreeCount(1);
+  document.getElementById('sLeft').textContent  = subtreeCount(nodes[1].left);
+  document.getElementById('sRight').textContent = subtreeCount(nodes[1].right);
+  const n=nodes[selId];
+  const uid = n.side==='root' ? 'MOTHER' : ('U'+n.id);
+  const pid = n.parent ? ('U'+n.parent) : '— (top)';
+  document.getElementById('selWho').innerHTML = n.side==='root'
+     ? '👑 <b>Mother ID</b> <span style="color:var(--txt3);font-weight:600;font-size:.85rem">· top / root</span>'
+     : `🆔 Unique ID <b>${uid}</b> <span style="color:var(--txt3);font-weight:600;font-size:.85rem">· parent: ${pid} · ${n.side} leg</span>`;
+  const lbl = x => x===1 ? 'Mother' : ('U'+x);
+  const ltId = extremeParent(selId,'left'), rtId = extremeParent(selId,'right');
+  document.getElementById('selTip').innerHTML =
+    `<b>Add Left</b> → naya user <b>${lbl(ltId)}</b> ke <b>left</b> me lagega. `+
+    `<b>Add Right</b> → <b>${lbl(rtId)}</b> ke <b>right</b> me. `+
+    `(Chain drill — beech ki doosri-side branches touch nahi hoti.)`;
+  document.getElementById('body').innerHTML = `
+    <div class="box rule"><span class="l">Unique ID + Parent ID</span>Har node ki apni <b>unique ID</b>. Uske neeche wale is ID ko <b>parent (mother)</b> maante hain — matlab <b>har node khud apne children ke liye mother</b> ki tarah kaam karti hai. Top se neeche tak same pattern.</div>
+    <div class="box rule"><span class="l">Do leg binary</span>Har node ke <b>sirf 2 child</b>: ek <span class="hi">Left</span>, ek <span class="hr">Right</span>. Left wale ka left, right wale ka right — <b>infinite</b> neeche.</div>
+    <div class="box warn"><span class="l">Extreme-chain placement</span>Naye user ki jagah <b>seedhi chain drill</b> se milti — <b>Left</b> = sponsor se left→left→left... jahan khatam ho; <b>Right</b> = right→right→right... jahan khatam ho. Beech me aane wali <b>doosri-side branches ignore</b> hoti hain (unko touch hi nahi karte).</div>`;
+}
+document.getElementById('btnL').onclick=()=>placeExtreme('left');
+document.getElementById('btnR').onclick=()=>placeExtreme('right');
+document.getElementById('reset').onclick=()=>{init();render(true);};
+document.getElementById('demo').onclick=()=>{
+  init();
+  // build a sample binary tree like the sketch
+  add(1,'left'); add(1,'right');
+  add(2,'left'); add(2,'right');
+  add(3,'left'); add(3,'right');
+  add(4,'left'); add(nodes[4].left,'left'); add(nodes[nodes[4].left].left,'right');
+  add(5,'right'); add(6,'left'); add(7,'right');
+  selId=1; render(true);
+};
+
+/* ---------------- concept + rules panels ---------------- */
+const CONCEPT=`<div class="panel">
+  <h2>🆔 Do alag ID — yahi binary plan ki jaan</h2>
+  <p class="sub">Naya user banate waqt <b>do</b> cheez chahiye (arg-1, arg-2). Log inhe mix kar dete — inka farq samajhna zaroori.</p>
+  <div class="two">
+    <div class="idcard u"><div class="t">1 · Union ID (Placement)</div>
+      Ye batati hai user <b>tree me KAHAN baithega</b>.
+      <ul>
+        <li>Kis node ke neeche, aur <b>Left ya Right</b> leg me.</li>
+        <li>Isi se binary tree ka <b>structure</b> banta hai.</li>
+        <li>Left wale ka left, right wale ka right — recursive.</li>
+      </ul>
+    </div>
+    <div class="idcard s"><div class="t">2 · Sponsor ID (Referrer)</div>
+      Ye batati hai user ko <b>KISNE laaya</b>.
+      <ul>
+        <li>Jisne refer kiya / joining karayi.</li>
+        <li>Iska tree ki position se <b>zaroori nahi</b> match ho.</li>
+        <li>Ek sponsor apne member ko left ya right — <b>dono</b> jagah rakh sakta.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box rule"><span class="l">Ek line me</span><b>Sponsor</b> = kisne laaya · <b>Union/Placement</b> = tree me kahan baitha. Dono alag ho sakte — isse <b>spillover</b> hota hai.</div>
+  <h3>Mother ID + recursive parent</h3>
+  <p style="color:var(--txt2)">Sabse upar wala <b>root = Mother ID</b>. Har node ki apni <b>unique ID</b> hoti hai, aur uske children us ID ko <b>parent id</b> maante hain.</p>
+  <div class="box rule"><span class="l">Sabse zaroori</span><b>Har node khud apne children ke liye mother/parent ki tarah kaam karti hai.</b> Yani top wali mother jaisa hi kaam har node apne subtree me karti — same pattern, infinite neeche.</div>
+
+  <h3>Placement kaise decide hota — Extreme Chain Rule</h3>
+  <p style="color:var(--txt2)">Kisi bhi sponsor node se naya user banate waqt, position seedhi <b>chain drill</b> se milti hai — koi zigzag ya "sabse nazdeeki khaali jagah" search nahi hoti:</p>
+  <div class="box warn"><span class="l">Left / Right chain drill</span>
+    <ul style="margin:8px 0 0 18px;color:var(--txt2);line-height:1.7">
+      <li><b>Left</b> chuno → sponsor se <b>left → left → left...</b> follow karo jahan tak left milta jaaye; jahan left <b>khaali</b> mile, <b>wahi</b> naya user us node ke left me lagta.</li>
+      <li><b>Right</b> chuno → wahi tarah <b>right → right → right...</b>; jahan right khaali mile, wahi lagta.</li>
+      <li>Beech me aane wali <b>doosri-side branches ignore</b> hoti hain — chain sirf apni hi direction me neeche jaati, kabhi cross nahi karti.</li>
+    </ul>
+  </div>
+  <p style="color:var(--txt2);font-size:.9rem"><b>Example:</b> U1 se Left → U1→U2→U4→<b>U8</b> (sab left) → U8 ke left me lagta. U1 se Right → U1→U3→<b>U7</b> (sab right) → U7 ke right me lagta. U2 se Left → U2→U4→<b>U8</b> ke left me; U2 se Right → U2→U5→<b>U11</b> ke right me.</p>
+</div>`;
+
+const RULES=`<div class="panel">
+  <h2>📋 User Module — Rules</h2>
+  <p class="sub">Two-leg binary tree, infinite depth.</p>
+  <table>
+    <tr><th>#</th><th>Rule</th></tr>
+    <tr><td>1</td><td><b>Mother ID</b> = tree ka root (sabse upar).</td></tr>
+    <tr><td>2</td><td>Har node ki <b>unique ID</b>; uske children uski ID ko <b>parent</b> maante — <b>har node khud mother jaisi</b> (recursive, self-similar).</td></tr>
+    <tr><td>3</td><td>Har node ke <b>max 2 child</b> — Left aur Right (two-leg binary).</td></tr>
+    <tr><td>4</td><td><b>Left wale ka left</b>, <b>right wale ka right</b> — recursive, <b>infinite</b> neeche ja sakta.</td></tr>
+    <tr><td>5</td><td>Naya user = <b>Union ID (placement)</b> + <b>Sponsor ID (referrer)</b> — do alag.</td></tr>
+    <tr><td>6</td><td>Sponsor member ko <b>Left aur Right — dono</b> jagah bana sakta (jagah ho to).</td></tr>
+    <tr><td>7</td><td><b>Extreme-chain placement:</b> Left = sponsor se left→left→left... jahan khatam ho; Right = right→right→right... jahan khatam ho. Beech ki <b>doosri-side branches touch nahi</b> hoti.</td></tr>
+    <tr><td>8</td><td>Commission / payout is tree pe <b>billing module</b> se aata hai — ye module sirf <b>structure</b> sambhalta.</td></tr>
+  </table>
+  <div class="box warn" style="max-width:none"><span class="l">Scope</span>Ye <b>User Module</b> sirf tree (kaun kiske neeche, kis leg me) ka kaam karta. Uske upar ka <b>paisa / commission</b> billing module dekhta hai.</div>
+</div>`;
+
+/* ---------------- engine ---------------- */
+let cur='tree';
+const side=document.getElementById('side');
+function show(){
+  const isTree = cur==='tree';
+  side.style.display = isTree?'':'none';
+  document.querySelector('footer').style.display = isTree?'flex':'none';
+  if(isTree){ render(true); }
+  else { stage.innerHTML = cur==='concept'?CONCEPT:RULES; }
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); cur=t.dataset.s; show();
+});
+window.addEventListener('resize',()=>{ if(cur==='tree') renderTree(); });
+show();
+</script>
+</body>
+</html>
