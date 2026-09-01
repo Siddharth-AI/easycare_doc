@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Flowcharts — Shop / Product / Commission</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 30px 24px 80px;
+    background: #f7f8fa;
+    color: #1f2937;
+    line-height: 1.6;
+  }
+  h1 {
+    text-align: center;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 12px;
+    color: #1e3a8a;
+  }
+  h2 {
+    margin-top: 50px;
+    background: #1e3a8a;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 1.3rem;
+  }
+  h3 { color: #1e40af; margin-top: 26px; font-size: 1.05rem; }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .note {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 9px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+    font-size: 0.93rem;
+  }
+  .mermaid { text-align: center; margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; }
+  th, td { border: 1px solid #d1d5db; padding: 8px 12px; text-align: center; }
+  th { background: #1e40af; color: #fff; }
+  tr:nth-child(even) { background: #f3f4f6; }
+  .legend { font-size: 0.9rem; color: #6b7280; }
+  .conv {
+    display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0;
+  }
+  .chip {
+    padding: 6px 12px; border-radius: 20px; color: #fff; font-size: 0.9rem; font-weight: 600;
+  }
+  .c-wh { background:#1e3a8a; } .c-mw { background:#7c3aed; }
+  .c-l1 { background:#2563eb; } .c-l2 { background:#0891b2; }
+  .c-l3 { background:#059669; } .c-u { background:#f59e0b; }
+  .c-money { background:#dc2626; }
+  @media print { h2 { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+
+<h1>Project Flow — Shop, Product & Commission</h1>
+<p class="legend" style="text-align:center;">Client ko samjhane ke liye visual flow. Browser me khulta hai · Ctrl+P se PDF bana sakte.</p>
+
+<!-- ============ NAMING CONVENTION ============ -->
+<h2>0 — Naming Convention (pehle ye samjho)</h2>
+<div class="card">
+<h3>Tiers (upar se neeche)</h3>
+<div class="conv">
+  <span class="chip c-wh">WH = Warehouse (top)</span>
+  <span class="chip c-mw">MW = Mini-Warehouse (optional)</span>
+  <span class="chip c-l1">Level 1 shop</span>
+  <span class="chip c-l2">Level 2 shop</span>
+  <span class="chip c-l3">Level 3 shop</span>
+  <span class="chip c-u">User</span>
+</div>
+<h3>Shop naming — L2 aur L3 DONO L1 ke child</h3>
+<table>
+  <tr><th>Name</th><th>Level</th><th>Kiska child</th></tr>
+  <tr><td><b>S3</b></td><td>Level 1</td><td>Warehouse / Mini-WH ke under</td></tr>
+  <tr><td><b>S3.1</b></td><td>Level 2</td><td>S3 ka child</td></tr>
+  <tr><td><b>S3.2</b></td><td>Level 3</td><td><b>S3 ka child</b> (S3.1 ka nahi)</td></tr>
+</table>
+<div class="note">
+<b>⚠️ Ye structure badal gaya hai.</b> Pehle chain seedhi thi — S3 → S3.1 → S3.1.1 (L3, L2 ke neeche).<br/>
+<b>Ab:</b> <b>S3.1 (L2)</b> aur <b>S3.2 (L3)</b> dono <b>seedha S3 (L1)</b> ke neeche — aapas me bhai-bhai, ek doosre ke neeche nahi.
+</div>
+<div class="note">
+<b>Mini-Warehouse bhi ek tier hai</b> (alag level). Multiple ho sakte → <b>MW1, MW2...</b><br/>
+Chain: <b>WH → MW → Level 1 → (Level 2 <i>ya</i> Level 3) → User</b><br/>
+Ek hi chain me L1+L2+L3 teeno <b>kabhi nahi</b> aate.
+</div>
+</div>
+
+<!-- ============ MODULE 1 : STRUCTURE ============ -->
+<h2>1 — Shop Structure (alag-alag cases)</h2>
+
+<div class="card">
+<h3>1.1 Poora network (ek mini-WH ke saath)</h3>
+<div class="mermaid">
+flowchart TD
+  WH["🏭 WH<br/>Warehouse"]:::wh
+  MW["🏬 MW<br/>Mini-Warehouse"]:::mw
+  S1["🏪 S1<br/>Level 1"]:::l1
+  S2["🏪 S2<br/>Level 1"]:::l1
+  S3["🏪 S3<br/>Level 1"]:::l1
+  S31["S3.1<br/>Level 2"]:::l2
+  S32["S3.2<br/>Level 3"]:::l3
+  WH --> MW
+  MW --> S1
+  MW --> S2
+  MW --> S3
+  S3 --> S31
+  S3 --> S32
+  classDef wh fill:#1e3a8a,color:#fff,stroke:#1e3a8a;
+  classDef mw fill:#7c3aed,color:#fff,stroke:#7c3aed;
+  classDef l1 fill:#2563eb,color:#fff,stroke:#2563eb;
+  classDef l2 fill:#0891b2,color:#fff,stroke:#0891b2;
+  classDef l3 fill:#059669,color:#fff,stroke:#059669;
+</div>
+</div>
+
+<div class="card">
+<h3>1.2 Multiple Mini-Warehouse</h3>
+<div class="mermaid">
+flowchart TD
+  WH["🏭 WH"]:::wh
+  MW1["🏬 MW1"]:::mw
+  MW2["🏬 MW2"]:::mw
+  A1["🏪 S1 (L1)"]:::l1
+  A2["🏪 S2 (L1)"]:::l1
+  B1["🏪 S5 (L1)"]:::l1
+  B2["🏪 S6 (L1)"]:::l1
+  WH --> MW1
+  WH --> MW2
+  MW1 --> A1
+  MW1 --> A2
+  MW2 --> B1
+  MW2 --> B2
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+</div>
+<div class="note">Har Mini-WH apni alag shops ko serve karta. WH sabko stock deta.</div>
+</div>
+
+<div class="card">
+<h3>1.3 Bina Mini-Warehouse (seedha WH → shops)</h3>
+<div class="mermaid">
+flowchart TD
+  WH["🏭 WH"]:::wh
+  S1["🏪 S1 (L1)"]:::l1
+  S2["🏪 S2 (L1)"]:::l1
+  WH --> S1
+  WH --> S2
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+</div>
+<div class="note">Mini-WH optional — kuch jagah nahi hoga, tab WH seedha Level 1 ko deta.</div>
+</div>
+
+<div class="card">
+<h3>1.4 Sparse cases — har shop alag depth tak ho sakti</h3>
+<p>Zaroori nahi har shop ke teeno level ho. 4 possible cases:</p>
+
+<h3>Case A — sirf Level 1 (neeche kuch nahi)</h3>
+<div class="mermaid">
+flowchart TD
+  MW["🏬 MW"]:::mw --> S2["🏪 S2<br/>Level 1"]:::l1
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+</div>
+
+<h3>Case B — Level 1 + Level 2 (Level 3 nahi)</h3>
+<div class="mermaid">
+flowchart TD
+  MW["🏬 MW"]:::mw --> S1["🏪 S1<br/>Level 1"]:::l1
+  S1 --> S11["S1.1<br/>Level 2"]:::l2
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+</div>
+
+<h3>Case C — Level 1 ke neeche DONO (L2 aur L3)</h3>
+<div class="mermaid">
+flowchart TD
+  MW["🏬 MW"]:::mw --> S3["🏪 S3<br/>Level 1"]:::l1
+  S3 --> S31["S3.1<br/>Level 2"]:::l2
+  S3 --> S32["S3.2<br/>Level 3"]:::l3
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+</div>
+
+<h3>Case D — Level 1 + sirf Level 3 (L2 hai hi nahi)</h3>
+<div class="mermaid">
+flowchart TD
+  MW["🏬 MW"]:::mw --> S4["🏪 S4<br/>Level 1"]:::l1
+  S4 --> S42["S4.2<br/>Level 3"]:::l3
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+</div>
+<div class="note">
+<b>⚠️ Purana "gap" wala concept khatam.</b> Pehle L3 ko L2 ke neeche hona zaroori tha, isliye L2 na hone pe "beech me gap" banta tha aur uska commission upar roll-up hota tha.<br/>
+<b>Ab L3 seedha L1 ke neeche hai</b> — L2 ka hona ya na hona L3 ko affect hi nahi karta. Koi gap, koi roll-up nahi.
+</div>
+</div>
+
+<!-- ============ PINCODE ============ -->
+<h2>2 — Pincode Mapping</h2>
+<div class="card">
+<h3>2.1 Rollup — neeche ke pincode upar bhi map hote</h3>
+<div class="mermaid">
+flowchart BT
+  S31["S3.1 (Level 2)<br/>apna: p4"]:::l2
+  S32["S3.2 (Level 3)<br/>apne: p1, p2, p3"]:::l3
+  S3["S3 (Level 1)<br/>apne: p5, p6<br/>+ dono branch: p1..p4"]:::l1
+  S31 -->|"p4 upar"| S3
+  S32 -->|"p1,p2,p3 upar"| S3
+  classDef l3 fill:#059669,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+</div>
+<table>
+  <tr><th>Shop</th><th>Apne pincode</th><th>Neeche se mila</th><th>Total serve</th></tr>
+  <tr><td>S3.2 (L3)</td><td>p1, p2, p3</td><td>—</td><td>p1, p2, p3</td></tr>
+  <tr><td>S3.1 (L2)</td><td>p4</td><td>— <b>(L3 iske neeche nahi)</b></td><td>sirf p4</td></tr>
+  <tr><td>S3 (L1)</td><td>p5, p6</td><td>p1, p2, p3 (L3 se) + p4 (L2 se)</td><td>p1 – p6</td></tr>
+</table>
+<div class="note">
+<b>Badla hua:</b> pehle L2 ko L3 ke pincode bhi rollup me milte the (kyunki L3 uske neeche tha). <b>Ab nahi</b> — L2 aur L3 alag branch hain, isliye L2 sirf apne pincode serve karta hai. Rollup dono ka <b>seedha L1 me</b> jaata hai.
+</div>
+</div>
+
+<!-- ============ USER & LIMIT ============ -->
+<h2>3 — User & Buying Limit</h2>
+
+<div class="card">
+<h3>3.1 User kis shop se le sakta?</h3>
+<div class="mermaid">
+flowchart TD
+  U1["👤 U1 — pincode p6"]:::u --> R1["sirf S3 serve karti p6<br/>➜ U1 sirf S3 se le"]:::r
+  U2["👤 U2 — pincode p1"]:::u --> R2["p1 ko S3.2 (L3) + S3 (L1)<br/>serve karti — S3.1 (L2) NAHI<br/>➜ U2 in dono se le sakta"]:::r
+  classDef u fill:#f59e0b,color:#fff;
+  classDef r fill:#fff7ed,color:#92400e,stroke:#f59e0b;
+</div>
+<div class="note"><b>Badla hua:</b> pehle p1, S3.1 (L2) me bhi rollup hota tha (kyunki L3 uske neeche tha). Ab L2 aur L3 alag branch hain — S3.1 ke paas sirf apna <b>p4</b> hai.</div>
+</div>
+
+<div class="card">
+<h3>3.2 Limit check (har order pe)</h3>
+<div class="mermaid">
+flowchart TD
+  O["🛒 User order — amount ₹X"]:::s --> Q{"Source shop =<br/>user ki HOME shop?"}:::q
+  Q -->|"Haan (home)"| OK["✅ UNLIMITED<br/>order allow"]:::ok
+  Q -->|"Nahi (doosri shop)"| E["Effective limit nikalo:<br/>special limit set hai? → special<br/>warna → ₹2000"]:::step
+  E --> L{"already spent + ₹X<br/>limit ke andar hai?"}:::q
+  L -->|"Haan"| OK2["✅ Allow<br/>spent = spent + ₹X"]:::ok
+  L -->|"Nahi"| B["⛔ Block<br/>(limit khatam<br/>→ increase request)"]:::bad
+  classDef s fill:#2563eb,color:#fff;
+  classDef step fill:#0891b2,color:#fff;
+  classDef ok fill:#059669,color:#fff;
+  classDef bad fill:#dc2626,color:#fff;
+  classDef q fill:#f59e0b,color:#fff;
+</div>
+<div class="note">
+<b>Limit sirf non-home shops pe.</b> Rupay (spend) pe count · har month 1st ko reset → wapas ₹2000.<br/>
+<b>Effective limit</b> = admin ne special diya (e.g. ₹10,000) to wahi, warna default ₹2000.<br/>
+<b>Example:</b> limit 2000, ab tak 1500 spend, naya order 800 → 1500+800=2300 &gt; 2000 → <b>Block</b>.
+</div>
+</div>
+
+<div class="card">
+<h3>3.3 Limit increase — request + admin</h3>
+<div class="mermaid">
+flowchart TD
+  U["👤 User"]:::u -->|"request (amount+reason)"| A{"👨‍💼 Admin"}:::a
+  A -->|Approve| S["Special limit ₹10,000<br/>= 2000 normal + 8000 extra<br/>(sirf is month)"]:::ok
+  A -->|Reject| X["❌ no change"]:::bad
+  S --> N["📅 Next month → wapas ₹2000"]:::ok
+  classDef u fill:#f59e0b,color:#fff;
+  classDef a fill:#7c3aed,color:#fff;
+  classDef ok fill:#059669,color:#fff;
+  classDef bad fill:#dc2626,color:#fff;
+</div>
+</div>
+
+<!-- ============ PRODUCT ============ -->
+<h2>4 — Product</h2>
+<div class="card">
+<h3>4.1 Category (nested, 4 level — product kahi bhi lag sakta)</h3>
+<div class="mermaid">
+flowchart TD
+  C["Category<br/>(prefix: Ag)"]:::cat --> SC["Sub-category"]:::cat
+  SC --> SSC["Sub-sub-category"]:::cat
+  SSC --> SSSC["Sub-sub-sub-category"]:::cat
+  C -. "product yahan bhi" .-> P1["📦 Product"]:::p
+  SSSC -. "ya yahan" .-> P3["📦 Product"]:::p
+  classDef cat fill:#2563eb,color:#fff;
+  classDef p fill:#f59e0b,color:#fff;
+</div>
+<div class="note">Product code = category prefix + name + id → e.g. <b>Ag-Rakshak123</b>.</div>
+</div>
+
+<div class="card">
+<h3>4.2 Product detail + pricing</h3>
+<div class="mermaid">
+flowchart LR
+  P["📦 PRODUCT<br/>id · name · QR · barcode<br/>packaging · unit · images · crop"]:::p
+  P --> MRP["MRP ₹1000"]:::d
+  P --> SP["Sell/MSP ₹800<br/>(user price)"]:::d
+  P --> GST["GST 10%<br/>= CGST 5 + SGST 5"]:::d
+  P --> PR["Level price<br/>har level ka apna rate<br/>(Admin set karta)"]:::d
+  classDef p fill:#1e3a8a,color:#fff;
+  classDef d fill:#0891b2,color:#fff;
+</div>
+<div class="note"><b>Price aur commission system me fix nahi hain</b> — har <b>product</b> pe Admin har level ka rate set karta hai, aur commission usi se nikalta hai. Neeche ke saare numbers sirf <b>example</b> hain.</div>
+<div class="note"><b>Billing ke waqt cost price customize</b> ho sakti hai — bill usi cost pe banega.</div>
+</div>
+
+<!-- ============ COMMISSION / MONEY ============ -->
+<h2>5 — Commission & Money Flow</h2>
+
+<div class="card">
+<h3>5.1 Do flow samjho — Maal neeche jata, Paisa upar aata</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH"]:::wh
+  L1["Level 1"]:::l1
+  L2["Level 2"]:::l2
+  L3["Level 3"]:::l3
+  U["👤 User"]:::u
+  WH -->|"maal"| L1
+  L1 -->|"maal"| L2
+  L1 -->|"maal"| L3
+  L2 -->|"maal"| U
+  L3 -->|"maal"| U
+  U -. "paisa" .-> L2
+  U -. "paisa" .-> L3
+  L2 -. "paisa" .-> L1
+  L3 -. "paisa" .-> L1
+  L1 -. "paisa" .-> WH
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+  classDef u fill:#f59e0b,color:#fff;
+</div>
+<div class="note"><b>Solid arrow = maal (neeche).  Dotted arrow = paisa (upar).</b> Har level apna khareed-price upar deta, baaki apne paas rakhta (commission).</div>
+<div class="note"><b>Dhyan:</b> L2 aur L3 dono <b>seedha L1 se</b> maal lete hain aur <b>seedha L1 ko</b> paisa dete hain. L2 se L3 ka koi rasta nahi.</div>
+</div>
+
+<div class="card">
+<h3>5.2 Raasta 1 — User Level 2 se khareedta</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH<br/>base"]:::wh -->|maal| L1["Level 1<br/>💰 apna hissa"]:::l1
+  L1 -->|maal| L2["Level 2<br/>💰 apna hissa"]:::l2
+  L2 -->|maal| U["👤 User<br/>pays"]:::u
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef u fill:#f59e0b,color:#fff;
+</div>
+<div class="note">Is raaste me sirf <b>L1 + L2</b> — L3 aata hi nahi (wo L1 ki doosri branch hai).</div>
+</div>
+
+<div class="card">
+<h3>5.3 Raasta 2 — User Level 3 se khareedta</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH<br/>base"]:::wh -->|maal| L1["Level 1<br/>💰 apna hissa"]:::l1
+  L1 -->|maal| L3["Level 3<br/>💰 apna hissa"]:::l3
+  L3 -->|maal| U["👤 User<br/>pays"]:::u
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+  classDef u fill:#f59e0b,color:#fff;
+</div>
+<div class="note">L2 = 75 (apna 25 + L3 ka 50) · L1 = 25 → total 100. (L3 involved nahi → 0)</div>
+</div>
+
+<div class="card">
+<h3>5.4 Raasta 3 — User seedha Level 1 se khareedta</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH<br/>base"]:::wh -->|maal| L1["Level 1<br/>💰 pura margin"]:::l1
+  L1 -->|maal| U["👤 User<br/>pays"]:::u
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef u fill:#f59e0b,color:#fff;
+</div>
+<div class="note">L1 ke paas pura neeche wala margin. L2/L3 beech me aate hi nahi. (L1 → customer = <b>50/50</b> WH ke saath.)</div>
+</div>
+
+<div class="card">
+<h3>5.5 Commission split — har level ko apna</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH"]:::wh -->|maal| L1["Level 1<br/>💰 apna set commission"]:::l1
+  L1 -->|maal| L2["Level 2<br/>💰 apna set commission"]:::l2
+  L1 -->|maal| L3["Level 3<br/>💰 apna set commission"]:::l3
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+</div>
+<div class="note">
+<b>Rule:</b> L2 aur L3 ke beech <b>koi rishta nahi</b>. Baaki flow bilkul pehle jaisa — har level ko <b>apna set commission</b> milta hai.<br/>
+• Sale <b>L2 se</b> → L1 aur L2 ko apna-apna<br/>
+• Sale <b>L3 se</b> → L1 aur L3 ko apna-apna<br/>
+Ek raaste ka level doosre raaste me aata hi nahi, isliye aapas me kuch bantta bhi nahi.
+</div>
+<div class="note">
+<b>Commission ka number product master se aata hai</b> — Admin har product pe har level ka rate set karta hai. System me koi fix ladder hardcode nahi hai.
+</div>
+<div class="note">
+<b>❌ Purana "missing level ka roll-up" rule ab KHATAM hai.</b> L2 aur L3 alag branch hain — ek ka na hona doosre ko affect hi nahi karta.
+</div>
+</div>
+
+<div class="card">
+<h3>5.6 Mini-Warehouse commission</h3>
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH<br/>base 685"]:::wh -->|685| MW["🏬 Mini-WH<br/>💰 +15"]:::mw
+  MW -->|700| L1["Level 1"]:::l1
+  L1 --> D["...aage same chain"]:::l2
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef mw fill:#7c3aed,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+</div>
+<div class="note">WH → Mini-WH ₹685, Mini-WH → Level 1 ₹700 → <b>Mini-WH commission = ₹15.</b> Baaki chain waisi hi.</div>
+</div>
+
+<!-- ============ INVOICE ============ -->
+<h2>6 — Invoice / Billing flow</h2>
+<div class="card">
+<div class="mermaid">
+flowchart LR
+  WH["🏭 WH"]:::wh -->|"📄 Stock Transfer note<br/>(GST nahi)"| L1["Level 1"]:::l1
+  L1 -->|"🧾 Tax Invoice<br/>(L1 naam + GST)"| L2["Level 2"]:::l2
+  L1 -->|"🧾 Tax Invoice<br/>(L1 naam + GST)"| L3["Level 3"]:::l3
+  L2 -->|"🧾 Retail Invoice"| U["👤 User"]:::u
+  L3 -->|"🧾 Retail Invoice"| U
+  classDef wh fill:#1e3a8a,color:#fff;
+  classDef l1 fill:#2563eb,color:#fff;
+  classDef l2 fill:#0891b2,color:#fff;
+  classDef l3 fill:#059669,color:#fff;
+  classDef u fill:#f59e0b,color:#fff;
+</div>
+<div class="note"><b>Rule:</b> WH→L1 sirf transfer challan (GST nahi). Uske baad har hop pe bechne wali shop ki GST invoice banegi.</div>
+</div>
+
+<p class="legend" style="margin-top:40px; text-align:center;">
+Deferred (abhi nahi): Inventory detail · Rewards/Points logic · Payment/Wallet
+</p>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>

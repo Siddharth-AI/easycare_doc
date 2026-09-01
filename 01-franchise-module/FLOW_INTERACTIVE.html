@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Flow — Shop / Pincode / Commission</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0; background: #0f172a; color: #e2e8f0;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header {
+    background: #1e293b; padding: 12px 20px; border-bottom: 2px solid #334155;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 1.1rem; margin: 0; color: #93c5fd; }
+  .chapter { font-size: 0.85rem; color: #94a3b8; }
+  .wrap { display: flex; flex: 1; min-height: 0; }
+  #board {
+    position: relative; width: 900px; height: 620px;
+    margin: 16px; background: #111827; border-radius: 14px;
+    border: 1px solid #334155; flex-shrink: 0;
+    background-image: radial-gradient(#1f2937 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  #side {
+    flex: 1; padding: 20px 24px; min-width: 280px;
+    display: flex; flex-direction: column;
+  }
+  #stepTitle { color: #fbbf24; font-size: 1.25rem; margin: 0 0 10px; }
+  #stepBody { font-size: 1rem; line-height: 1.7; flex: 1; }
+  #stepBody b { color: #fde68a; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:12px; font-size:0.8rem; font-weight:700; color:#fff; }
+  .p-wh{background:#1e3a8a;} .p-mw{background:#7c3aed;} .p-l1{background:#2563eb;}
+  .p-l2{background:#0891b2;} .p-l3{background:#059669;} .p-u{background:#f59e0b;}
+
+  /* nodes */
+  .node {
+    position: absolute; width: 122px; min-height: 50px;
+    border-radius: 10px; color: #fff; font-size: 0.8rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 6px; line-height: 1.25; white-space: pre-line;
+    opacity: 0; transform: scale(0.6); transition: all .45s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 4px 12px rgba(0,0,0,.4); border: 2px solid transparent;
+  }
+  .node.show { opacity: 1; transform: scale(1); }
+  .node.hi { border-color: #fde047; box-shadow: 0 0 0 4px rgba(253,224,71,.35), 0 4px 14px rgba(0,0,0,.5); }
+  .node.dim { opacity: .28; }
+  .wh{background:#1e3a8a;} .mw{background:#7c3aed;} .l1{background:#2563eb;}
+  .l2{background:#0891b2;} .l3{background:#059669;} .u{background:#f59e0b;} .admin{background:#db2777;}
+
+  .badge {
+    position:absolute; background:#0b1220; border:1px solid #475569;
+    color:#7dd3fc; font-size:0.72rem; padding:3px 8px; border-radius:8px;
+    opacity:0; transition:opacity .4s; font-weight:600; white-space:nowrap;
+  }
+  .badge.show{opacity:1;}
+
+  svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .edge { stroke:#475569; stroke-width:2.5; fill:none; opacity:0; transition:opacity .4s; }
+  .edge.show{opacity:1;}
+  .edge.dash{stroke-dasharray:6 6; stroke:#ef4444;}
+  .edgelbl{ fill:#cbd5e1; font-size:11px; font-weight:600; opacity:0; transition:opacity .4s;}
+  .edgelbl.show{opacity:1;}
+
+  #token {
+    position:absolute; width:54px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.72rem; font-weight:700; color:#fff; z-index:5;
+    opacity:0; transition: opacity .3s; box-shadow:0 3px 10px rgba(0,0,0,.5);
+  }
+
+  footer {
+    background:#1e293b; padding:12px 20px; border-top:2px solid #334155;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  button {
+    background:#2563eb; color:#fff; border:none; padding:9px 18px;
+    border-radius:8px; font-size:0.95rem; font-weight:600; cursor:pointer;
+    transition: background .2s;
+  }
+  button:hover{ background:#1d4ed8; }
+  button:disabled{ background:#475569; cursor:not-allowed; opacity:.6; }
+  #play{ background:#059669; } #play:hover{ background:#047857; }
+  #reset{ background:#64748b; }
+  .prog { flex:1; height:8px; background:#334155; border-radius:5px; overflow:hidden; min-width:120px; }
+  .prog > i { display:block; height:100%; background:#3b82f6; width:0; transition:width .3s; }
+  .count{ font-size:0.85rem; color:#94a3b8; min-width:64px; text-align:right; }
+  @media(max-width:1280px){ .wrap{flex-direction:column;} #board{margin:12px auto;} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔄 Interactive System Flow</h1>
+  <span class="chapter" id="chapter">Chapter —</span>
+</header>
+
+<div class="wrap">
+  <div id="board">
+    <svg id="lines"></svg>
+    <div id="token"></div>
+    <!-- nodes injected -->
+  </div>
+  <div id="side">
+    <h2 id="stepTitle">Start</h2>
+    <div id="stepBody">Press <b>Next ▶</b> ya <b>Auto-play</b> to begin.</div>
+  </div>
+</div>
+
+<footer>
+  <button id="back">◀ Back</button>
+  <button id="next">Next ▶</button>
+  <button id="play">▶ Auto-play</button>
+  <button id="reset">↻ Reset</button>
+  <div class="prog"><i id="bar"></i></div>
+  <span class="count" id="count">0 / 0</span>
+</footer>
+
+<script>
+// ---------- node definitions (x,y = top-left; box 122x50) ----------
+const NODES = {
+  WH:   {x:389, y:24,  cls:'wh', label:'🏭 WH\nWarehouse'},
+  MW:   {x:389, y:120, cls:'mw', label:'🏬 MW\nMini-Warehouse'},
+  S1:   {x:90,  y:225, cls:'l1', label:'🏪 S1\nLevel 1'},
+  S2:   {x:389, y:225, cls:'l1', label:'🏪 S2\nLevel 1'},
+  S3:   {x:688, y:225, cls:'l1', label:'🏪 S3\nLevel 1'},
+  S31:  {x:600, y:345, cls:'l2', label:'S3.1\nLevel 2'},
+  S311: {x:760, y:345, cls:'l3', label:'S3.2\nLevel 3'},
+  U2:   {x:688, y:465, cls:'u',  label:'👤 U2\npincode p1'},
+  ADMIN:{x:389, y:545, cls:'admin', label:'👨‍💼 Admin'},
+};
+const W=122, H=50;
+const cx = id => NODES[id].x + W/2;
+const cy = id => NODES[id].y + H/2;
+
+// ---------- build DOM nodes ----------
+const board = document.getElementById('board');
+const svg = document.getElementById('lines');
+const token = document.getElementById('token');
+const nodeEls = {};
+for (const id in NODES){
+  const n = NODES[id];
+  const d = document.createElement('div');
+  d.className = 'node ' + n.cls;
+  d.style.left = n.x+'px'; d.style.top = n.y+'px';
+  d.textContent = n.label;
+  d.id = 'node-'+id;
+  board.appendChild(d);
+  nodeEls[id] = d;
+}
+
+// ---------- steps ----------
+const A = id => id; // alias
+const STEPS = [
+ { ch:'1. Warehouse', t:'🏭 Warehouse (top)',
+   b:'Sabse upar <b>Warehouse (WH)</b>. Yahi se saara stock start hota hai. Pura system ka source.',
+   nodes:['WH'], hi:['WH'] },
+
+ { ch:'2. Mini-Warehouse', t:'🏬 Mini-Warehouse (ek level hai)',
+   b:'WH ke neeche <b>Mini-Warehouse (MW)</b> — <b>optional</b>, kuch jagah hoga kuch jagah nahi, multiple bhi (MW1, MW2). <b>MW bhi ek level hai</b> — yahan se bhi user khareed sakta, aur iska bhi <b>apna pincode</b> hota.',
+   nodes:['WH','MW'], edges:[['WH','MW','stock']], hi:['MW'] },
+
+ { ch:'3. Level 1 Shops', t:'🏪 Level 1 Franchises',
+   b:'MW ke neeche <b>Level 1</b> shops — S1, S2, S3. Inko MW se stock milta. Har shop ka apna parent fix.',
+   nodes:['WH','MW','S1','S2','S3'],
+   edges:[['WH','MW','stock'],['MW','S1'],['MW','S2'],['MW','S3']],
+   hi:['S1','S2','S3'] },
+
+ { ch:'4. Level 2 & 3', t:'🔻 Sub-shops — L2 aur L3 DONO L1 ke neeche',
+   b:'<b>Badla hua rule:</b> <b>S3 (Level 1)</b> ke neeche <b>S3.1 (Level 2)</b> aur <b>S3.2 (Level 3)</b> — <b>dono seedha S3 ke neeche</b>, aapas me bhai-bhai.<br>Pehle L3, L2 ke neeche hota tha — <b>ab nahi</b>. S1/S2 ke neeche kuch nahi (sparse — allowed).',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW','stock'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311']],
+   hi:['S31','S311'] },
+
+ { ch:'4. Rules', t:'📌 2 zaroori rules',
+   b:'• <b>Same level pe do shop ka pincode same nahi</b> ho sakta — har pincode level me unique.<br>• Har shop apne <b>upper level (parent) se map</b> hoti hai — parent ki <b>shop id</b> ke saath. User ka pincode mapping bhi rehta hi hai.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31','parent id'],['S3','S311','parent id']],
+   hi:['S3','S31','S311'] },
+
+ { ch:'5. Pincode', t:'📍 Level 3 ko pincode mile',
+   b:'<b>S3.2 (Level 3)</b> ko pincode diye → <b>p1, p2, p3</b>.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311']],
+   hi:['S311'], badge:{S311:'serve: p1,p2,p3'} },
+
+ { ch:'5. Pincode', t:'📍 Level 2 — sirf apna (rollup nahi)',
+   b:'<b>S3.1 (Level 2)</b> ka apna pincode <b>p4</b> — bas itna hi.<br><b>Dhyan:</b> L3 ab L2 ke neeche <b>nahi</b> hai, isliye L3 ke p1,p2,p3 <b>L2 me rollup nahi</b> hote. Dono alag branch hain.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311']],
+   hi:['S31'], badge:{S311:'p1,p2,p3', S31:'serve: sirf p4'} },
+
+ { ch:'5. Pincode', t:'📍 Level 1 — DONO branch ka rollup',
+   b:'<b>S3 (Level 1)</b> ka apna <b>p5, p6</b> + <b>dono</b> branch ka rollup:<br>• S3.1 se <b>p4</b><br>• S3.2 se <b>p1, p2, p3</b><br>→ S3 serve karta <b>p1...p6</b>.<br>S1 ka apna alag pincode <b>p8</b>, S2 ka <b>p9</b>.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31','rollup ⬆'],['S3','S311','rollup ⬆']],
+   hi:['S3','S1','S2'], badge:{S311:'p1,p2,p3', S31:'p4', S3:'serve: p1...p6', S1:'p8', S2:'p9'} },
+
+ { ch:'5. Pincode', t:'📍 Mini-WH ka bhi apna pincode',
+   b:'<b>MW</b> bhi ek level — apna pincode <b>p7</b> + neeche sab (S1,S2,S3 ki chain) rollup → MW serve karta <b>p1...p9</b>. Yahan se bhi khareed sakte.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311'],
+   edges:[['WH','MW','rollup ⬆'],['MW','S1','⬆'],['MW','S2','⬆'],['MW','S3','⬆'],['S3','S31'],['S3','S311']],
+   hi:['MW'], badge:{S311:'p1,p2,p3', S31:'p1..p4', S3:'p1...p6', S1:'p8', S2:'p9', MW:'serve: p1...p9'} },
+
+ { ch:'6. User', t:'👤 User ka pincode = home decide',
+   b:'<b>U2</b> ka pincode <b>p1</b>. Rule: <b>jis shop ke served-pincode me p1 ho → wahi home (unlimited)</b>.<br>p1 hai → <b>S3.2, S3, MW</b> me (upar rollup hua) ✓.<br>p1 nahi hai → <b>S3.1</b> (sirf p4), S1 (p8), S2 (p9) me ✗.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311','U2'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311'],['S311','U2','serve']],
+   hi:['U2','S3','S311','MW'], dim:['S1','S2','S31'],
+   badge:{S311:'p1✓', S31:'p4 ✗', S3:'p1✓', MW:'p1✓', S1:'p8 ✗', S2:'p9 ✗'} },
+
+ { ch:'7. Buying & Limit', t:'✅ Pincode MATCH → UNLIMITED',
+   b:'U2 (p1) <b>S3</b> se le → S3 serve karta p1...p6, <b>p1 match ✓</b> → ye uski <b>home shop</b> → <b>koi limit nahi</b>. (MW se bhi p1 match → unlimited.)',
+   nodes:['WH','MW','S1','S2','S3','S31','S311','U2'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311'],['S3','U2','MATCH ✓ buy']],
+   hi:['S3','U2'], dim:['S1','S2','S31','S311'],
+   badge:{S3:'p1 ✓ match', U2:'pincode p1'} },
+
+ { ch:'7. Buying & Limit', t:'⚠️ Pincode ALAG → ₹2000 limit',
+   b:'U2 (p1) <b>S1</b> se le → S1 serve karta sirf <b>p8</b>, <b>p1 match nahi ✗</b> → <b>monthly limit ₹2000</b> lagti. Effective limit = special set hai to wahi, warna 2000. Cross → <b>block</b> → admin se request. Har month reset.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311','U2'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311'],['S1','U2','MISMATCH → limit ₹2000']],
+   hi:['S1','U2'], dim:['S2','S3','S31','S311','MW'],
+   badge:{S1:'p8 ✗ alag', U2:'pincode p1'} },
+
+ { ch:'7. Buying & Limit', t:'📩 Limit badhane ki request → Admin',
+   b:'Limit khatam ho gayi? User khud nahi badha sakta. User <b>Admin ko request</b> bhejta (amount + reason).<br>Admin <b>Approve</b> kare → special limit lag jaaye (e.g. ₹10,000 = 2000 normal + 8000 extra), sirf us month.<br>Admin <b>Reject</b> → koi change.',
+   nodes:['U2','ADMIN'],
+   edges:[['U2','ADMIN','request (amount + reason)',false,0.45],['ADMIN','U2','approve → limit ↑',false,0.45]],
+   hi:['U2','ADMIN'] },
+
+ { ch:'8. Commission — Setup', t:'🏷️ Rate fix + commission product se aata',
+   b:'Maal har hop pe <b>ek hi rate</b> me transfer hota — koi level beech me price nahi badhata.<br><b>Commission fix nahi hai</b> — har <b>product</b> ke apne level-rate Admin set karta hai, commission usi se nikalta. Neeche ke numbers sirf <b>example</b> hain (₹800 rate, ₹100 pool).',
+   nodes:['WH','S3','S31','S311','U2'],
+   edges:[['WH','S3','₹800'],['S3','S31','₹800'],['S3','S311','₹800']],
+   hi:[], dim:[] },
+
+ { ch:'8. Commission — Structure', t:'🔀 L2 aur L3 — do alag raste',
+   b:'<b>Nayi structure:</b> L2 aur L3 dono <b>seedha L1 ke neeche</b> hain — ek doosre ke neeche nahi.<br>Iska matlab ek hi chain me L1+L2+L3 teeno <b>kabhi nahi</b> aate. Har sale me sirf <b>do level</b>: L1+L2, ya L1+L3.',
+   nodes:['WH','S3','S31','S311'],
+   edges:[['WH','S3','₹800'],['S3','S31','₹800'],['S3','S311','₹800']],
+   hi:['S3','S311'] },
+
+ { ch:'8. Commission — Maal', t:'📦 Maal neeche jata (rate fix)',
+   b:'Maal WH se neeche aata — har hop same rate pe. Price kahin nahi badhti. Sirf <b>commission</b> alag-alag levels ko milta hai.',
+   nodes:['WH','S3','S31','S311','U2'],
+   edges:[['WH','S3','₹800'],['S3','S31','₹800'],['S3','S311','₹800'],['S31','U2','₹800']],
+   hi:[], dim:[],
+   anim:{path:['WH','S3','S31','U2'], color:'#2563eb', label:'📦'} },
+
+ { ch:'8. Commission — Raasta 1', t:'💰 User ne L2 se liya',
+   b:'Chain: <b>WH → L1 → L2 → User</b>. Is raaste me <b>L3 aata hi nahi</b> — wo L1 ki doosri branch hai.<br>Sirf <b>do level</b> ko commission: L1 aur L2.',
+   nodes:['WH','S3','S31','U2'],
+   edges:[['WH','S3','800'],['S3','S31','800'],['S31','U2','800']],
+   hi:['S3','S31'],
+   badge:{S3:'💰 L1 ka hissa', S31:'💰 L2 ka hissa'} },
+
+ { ch:'8. Commission — Raasta 2', t:'💰 User ne L3 se liya',
+   b:'Chain: <b>WH → L1 → L3 → User</b>. Is raaste me <b>L2 aata hi nahi</b>.<br>Yahan bhi sirf <b>do level</b> ko commission: L1 aur L3.',
+   nodes:['WH','S3','S311','U2'],
+   edges:[['WH','S3','800'],['S3','S311','800'],['S311','U2','800']],
+   hi:['S3','S311'],
+   badge:{S3:'💰 L1 ka hissa', S311:'💰 L3 ka hissa'} },
+
+ { ch:'8. Commission — Rule', t:'✅ Har level ko apna set commission',
+   b:'<b>L2 aur L3 ke beech koi rishta nahi hai.</b> Baaki flow bilkul pehle jaisa — har level ko <b>apna set commission</b> milta hai.<br><br>• Sale <b>L2 se</b> → L1 aur L2 ko apna-apna<br>• Sale <b>L3 se</b> → L1 aur L3 ko apna-apna<br><br>Ek raaste ka level doosre raaste me aata hi nahi, isliye aapas me kuch <b>bantta bhi nahi</b>. Commission ka number <b>product master se</b> aata hai.<br><br><b>Purana "missing level ka roll-up" rule ab KHATAM hai.</b>',
+   nodes:['WH','S3','S31','S311'],
+   edges:[['WH','S3','800'],['S3','S31','800'],['S3','S311','800']],
+   hi:['S3','S31','S311'],
+   badge:{S3:'💰 apna', S31:'💰 apna', S311:'💰 apna'} },
+
+ { ch:'8. Commission — Case C ⭐', t:'⭐ L1 DIRECT user ko → 50% / 50% WH',
+   b:'<b>Rule (sirf Level 1):</b> agar L1 <b>direct user</b> ko beche → pura commission ₹100 ka<br>• <b>50% L1 = 50</b><br>• <b>50% Warehouse = 50</b>',
+   nodes:['WH','S3','U2'],
+   edges:[['WH','S3','800'],['S3','U2','800']],
+   hi:['S3','WH'],
+   badge:{S3:'💰 50 (50%)', WH:'💰 50 (50%)'} },
+
+ { ch:'8. Commission — Case D ⭐', t:'⭐ L1 user ko 900 me beche (markup)',
+   b:'L1 ne user ko <b>900</b> me becha (800 se 100 upar):<br>• Base commission 100 → <b>50/50</b> (L1 50, WH 50)<br>• Extra <b>100 (900−800) pura L1 ka</b><br>L1 = <b>150</b>, WH = <b>50</b>.',
+   nodes:['WH','S3','U2'],
+   edges:[['WH','S3','800'],['S3','U2','becha 900']],
+   hi:['S3'],
+   badge:{S3:'💰 50 + extra 100 = 150', WH:'💰 50'} },
+
+ { ch:'8. Commission — Case E', t:'💰 L3 ne user ko 900 me becha (markup)',
+   b:'L3 ne user ko <b>900</b> me becha (rate se 100 upar):<br>• Base commission <b>normal</b> (L1 + L3 ka apna-apna hissa)<br>• Extra <b>100 pura L3 ka</b><br>• Par <b>report me ye 100 ALAG dikhega</b> (* mark).',
+   nodes:['WH','S3','S311','U2'],
+   edges:[['WH','S3','800'],['S3','S311','800'],['S311','U2','becha 900']],
+   hi:['S311'],
+   badge:{S3:'💰 L1 ka hissa', S311:'💰 apna + 100*'} },
+
+ { ch:'8. Commission — Mini-WH', t:'🏬 Mini-WH ka commission',
+   b:'Mini-WH chain me ho to uska bhi <b>set commission ₹15</b>. Maal phir bhi <b>800</b> me transfer hota, baaki neeche ki chain bilkul same.',
+   nodes:['WH','MW','S3'],
+   edges:[['WH','MW','800'],['MW','S3','800']],
+   hi:['MW'],
+   badge:{MW:'💰 15'} },
+
+ { ch:'8. Commission — Case G ⭐', t:'⭐ Mini-WH DIRECT user ko beche',
+   b:'Mini-WH agar <b>direct user</b> ko beche:<br>• MW apna commission <b>15</b><br>• Baaki <b>100 profit → WH & MW me 50/50</b> (50 each)<br>MW = 15 + 50 = <b>65</b>, WH = <b>50</b>.',
+   nodes:['WH','MW','U2'],
+   edges:[['WH','MW','800'],['MW','U2','800']],
+   hi:['MW','WH'],
+   badge:{MW:'💰 15 + 50 = 65', WH:'💰 50'} },
+
+ { ch:'8. Commission — Case H ⭐', t:'⭐ L1 direct user (MW chain me)',
+   b:'Chain me MW bhi hai (WH→MW→L1), aur <b>L1 direct user</b> ko beche:<br>• MW apna <b>15</b><br>• Baaki <b>100 profit → WH & L1 me 50/50</b><br>MW = 15, WH = <b>50</b>, L1 = <b>50</b>.',
+   nodes:['WH','MW','S3','U2'],
+   edges:[['WH','MW','800'],['MW','S3','800'],['S3','U2','800']],
+   hi:['WH','S3','MW'],
+   badge:{MW:'💰 15', S3:'💰 50 (50%)', WH:'💰 50 (50%)'} },
+
+ { ch:'✓ Done', t:'🎉 Pura flow complete',
+   b:'WH → Mini-WH → <b>L1 → (L2 aur L3 dono seedha L1 ke neeche)</b> → Pincode (rollup, match=unlimited / alag=₹2000 limit) → Limit request→Admin → Commission (rate fix, commission product se, L1 direct 50/50 WH, markup report me alag).<br><br><b>Yaad rakho:</b> ek sale me sirf do level aate hain — L1+L2 ya L1+L3. Split abhi client se confirm hona hai.<br><br>Back/Next se dobara dekh. <b>Auto-play</b> se khud chalega.',
+   nodes:['WH','MW','S1','S2','S3','S31','S311','U2'],
+   edges:[['WH','MW'],['MW','S1'],['MW','S2'],['MW','S3'],['S3','S31'],['S3','S311'],['S311','U2']],
+   hi:[] },
+];
+
+// ---------- render ----------
+let cur = -1, playing=false, playTimer=null, animTimers=[];
+
+function clearAnim(){ animTimers.forEach(clearTimeout); animTimers=[]; token.style.opacity=0; }
+
+function render(i){
+  clearAnim();
+  const s = STEPS[i];
+  document.getElementById('chapter').textContent = 'Chapter ' + s.ch;
+  document.getElementById('stepTitle').innerHTML = s.t;
+  document.getElementById('stepBody').innerHTML = s.b;
+  const shown = new Set(s.nodes||[]);
+  const hi = new Set(s.hi||[]);
+  const dim = new Set(s.dim||[]);
+
+  // nodes
+  for (const id in nodeEls){
+    const el = nodeEls[id];
+    el.classList.toggle('show', shown.has(id));
+    el.classList.toggle('hi', hi.has(id));
+    el.classList.toggle('dim', dim.has(id));
+  }
+
+  // edges
+  svg.innerHTML='';
+  (s.edges||[]).forEach(e=>{
+    const [a,b,lbl,dash] = e;
+    if(!shown.has(a)||!shown.has(b)) return;
+    const x1=cx(a), y1=cy(a), x2=cx(b), y2=cy(b);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('class','edge show'+(dash?' dash':''));
+    svg.appendChild(line);
+    if(lbl){
+      const frac = (e[4]!==undefined)?e[4]:0.5;
+      const len = Math.hypot(x2-x1, y2-y1) || 1;
+      const side = frac<0.5 ? -1 : 1;
+      const ox = (-(y2-y1)/len)*16*side;
+      const oy = ((x2-x1)/len)*16*side;
+      const lx = x1+(x2-x1)*frac + ox;
+      const ly = y1+(y2-y1)*frac + oy;
+      const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x',lx); txt.setAttribute('y',ly);
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('class','edgelbl show');
+      txt.textContent=lbl;
+      svg.appendChild(txt);
+    }
+  });
+
+  // badges
+  document.querySelectorAll('.badge').forEach(b=>b.remove());
+  if(s.badge){
+    for(const id in s.badge){
+      if(!shown.has(id)) continue;
+      const bd=document.createElement('div');
+      bd.className='badge show';
+      bd.textContent=s.badge[id];
+      bd.style.left=(NODES[id].x + W + 8)+'px';
+      bd.style.top=(NODES[id].y + 14)+'px';
+      board.appendChild(bd);
+    }
+  }
+
+  // animation
+  if(s.anim) runAnim(s.anim);
+
+  // controls
+  document.getElementById('count').textContent=(i+1)+' / '+STEPS.length;
+  document.getElementById('bar').style.width=((i+1)/STEPS.length*100)+'%';
+  document.getElementById('back').disabled = i<=0;
+  document.getElementById('next').disabled = i>=STEPS.length-1;
+}
+
+function runAnim(a){
+  const path=a.path;
+  token.style.background=a.color;
+  token.textContent=a.label;
+  // place at start
+  token.style.transition='none';
+  token.style.left=(cx(path[0])-27)+'px';
+  token.style.top=(cy(path[0])-15)+'px';
+  token.style.opacity=1;
+  let step=0;
+  const move=()=>{
+    step++;
+    if(step>=path.length){
+      animTimers.push(setTimeout(()=>{ token.style.opacity=0; },500));
+      return;
+    }
+    token.style.transition='left .7s ease, top .7s ease';
+    token.style.left=(cx(path[step])-27)+'px';
+    token.style.top=(cy(path[step])-15)+'px';
+    animTimers.push(setTimeout(move,780));
+  };
+  animTimers.push(setTimeout(move,300));
+}
+
+function go(i){
+  if(i<0||i>=STEPS.length) return;
+  cur=i; render(cur);
+}
+function next(){ if(cur<STEPS.length-1) go(cur+1); else stopPlay(); }
+function back(){ if(cur>0) go(cur-1); }
+
+function startPlay(){
+  playing=true;
+  document.getElementById('play').textContent='⏸ Pause';
+  if(cur>=STEPS.length-1) go(0);
+  const tick=()=>{
+    if(!playing) return;
+    if(cur>=STEPS.length-1){ stopPlay(); return; }
+    next();
+    playTimer=setTimeout(tick, 3200);
+  };
+  playTimer=setTimeout(tick, 600);
+}
+function stopPlay(){
+  playing=false; clearTimeout(playTimer);
+  document.getElementById('play').textContent='▶ Auto-play';
+}
+
+document.getElementById('next').onclick=()=>{ stopPlay(); next(); };
+document.getElementById('back').onclick=()=>{ stopPlay(); back(); };
+document.getElementById('reset').onclick=()=>{ stopPlay(); go(0); };
+document.getElementById('play').onclick=()=>{ playing?stopPlay():startPlay(); };
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){ stopPlay(); next(); }
+  if(e.key==='ArrowLeft'){ stopPlay(); back(); }
+});
+
+go(0);
+</script>
+</body>
+</html>
