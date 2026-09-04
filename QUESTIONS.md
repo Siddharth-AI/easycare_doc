@@ -33,20 +33,21 @@ Commission ka number waise bhi **product master se** aata hai — Admin har prod
 
 **Jawab:** **Per franchise.** Admin har L1 ke liye alag set karta hai. (₹15 lakh sirf ek example tha.)
 
-### Q5. Achievers — Level 2 se 5 tak ka Direct Team target?
+### Q5. Achievers — Direct aur Direct Team
 
-**Jawab:** Table me **pehle se hi hai** (L1–L5 sab). Simulator me bhi likha hua hai.
+**Jawab:** Ye **do alag cheezein** hain — sheet me do alag column hain. (Pehle humne galti se dono ko ek hi column me mila diya tha.)
 
-| Lv | Rank | Left PV | Right PV | Direct Team / mahina |
-|---|---|---|---|---|
-| 1 | Silver Director | 1,00,000 | 1,00,000 | 5,000 |
-| 2 | Gold Director | 5,00,000 | 5,00,000 | 25,000 |
-| 3 | Platinum Director | 25,00,000 | 25,00,000 | 50,000 |
-| 4 | Diamond Director | 50,00,000 | 50,00,000 | 1,00,000 |
-| 5 | Crown Director | 2,00,00,000 | 2,00,00,000 | 2,00,000 |
+| Lv | Rank | Left team PV<br>(Org-1) | Right team PV<br>(Org-2) | **Direct**<br>(ek baar) | **Direct Team**<br>(har mahine) | Reward | % Turnover |
+|---|---|---|---|---|---|---|---|
+| 1 | Silver Director | 1,00,000 | 1,00,000 | 5,000 | **25,000** | 3N4D Goa stay | 15% |
+| 2 | Gold Director | 5,00,000 | 5,00,000 | 25,000 | **50,000** | Domestic Tour | 10% |
+| 3 | Platinum Director | 25,00,000 | 25,00,000 | 50,000 | **1,00,000** | Intl. Tour + 2% car fund | 8% |
+| 4 | Diamond Director | 50,00,000 | 50,00,000 | 50,000 | **2,00,000** | International Tour | 7% |
+| 5 | Crown Director | 2,00,00,000 | 2,00,00,000 | 50,000 | **5,00,000** | Intl. Family Tour (1+1) + 3% house fund | 7% |
 
-**Left PV aur Right PV har mahine** maintain karne hote hain.
-**Direct Team ka target sirf EK BAAR** — pehli baar us rank pe qualify karne ke liye. Qualify hone ke baad aage zaroorat nahi.
+- **Org-1 = Left team PV** · **Org-2 = Right team PV** (binary tree ki dono legs)
+- **Direct** ("Sales by Direct Joiners") = **EK BAAR**. Jinko khud sponsor kiya unki sale. Target pura ho gaya → **baat khatam**, dobara nahi dekha jaata
+- **Direct Team** ("Direct Team Sales") = **HAR MAHINE**. Jaise Silver pe ho → us mahine **25,000 PV** ka direct-team business karna hi padega, **tabhi agle mahine** us rank ka benefit milega
 
 ### Q6. Startup Incentive ki time-limit window kitni?
 

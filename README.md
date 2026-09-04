@@ -18,8 +18,10 @@ High-level documentation — **client ke liye alag, developer ke liye alag**.
 | File | Kya | Kiske liye |
 |---|---|---|
 | `../index.html` ⭐ | **Live master doc — ab project ROOT me hai** (v1.1). Poora system, 11 sections, sign-off + confirmed points | **Client** |
-| `Apolium_System_Overview_CLIENT.docx/.pdf` | ⚠️ **Purana (v1.0)** — abhi regenerate nahi hua, `index.html` dekhiye | Client |
-| `Apolium_Technical_Architecture_DEV.docx/.pdf` | ⚠️ **Purana** — DB schema, incentive algorithms, scaling, NFRs | **Internal / dev** |
+| `Apolium_System_Overview_CLIENT.docx/.pdf` ⭐ | **UPDATED (v1.2)** — client ko dene wala doc, 21 pages. Saare naye rules isme hain | **Client** |
+| `build_client_doc.py` | Upar wale docx ka generator (rule badle → `python build_client_doc.py`, phir Word se PDF export) | Internal |
+| `Apolium_Technical_Architecture_DEV.docx/.pdf` | **UPDATED (v1.2)** — 40 pages. DB schema, BPI algorithm (naya washout rule), scaling, NFRs. Dev ke liye, client ko nahi jaata | **Internal / dev** |
+| `patch_dev_doc.py` | DEV doc ka patch script — business rule badle to isme entry add karke re-run karo | Internal |
 | `README.md` | Dono docs ka index + locked architectural decisions | Internal |
 
 ## 📁 01-franchise-module

@@ -923,30 +923,35 @@ function achWire(){
 const DECK_ACH=[
  {k:'Achievers kya hai',say:'Ye sabse upar ka reward hai — <b>rank</b> milta hai, <b>tour</b> milta hai, aur company ke <b>poore mahine ke turnover</b> me se hissa milta hai.',
   html:`<h2>🏆 Achievers Incentive &amp; Recognition</h2>
-   <p class="lead">Left org + Right org me <b>PV target</b> pura karo, monthly direct-team-sales maintain karo — rank aur reward dono milega. (Pool company ke <b>PV + GV</b> pe banta hai.)</p>
+   <p class="lead">Left team + Right team ka <b>PV target</b> pura karo, <b>Direct</b> (ek baar) aur <b>Direct Team</b> (har mahine) bhi — tab rank aur reward milega. (Pool company ke <b>PV + GV</b> pe banta hai.)</p>
    <div class="arrowrow">
-     <div class="stat cy"><div class="k">Org-1 PV</div><div class="v">Target</div></div>
+     <div class="stat cy"><div class="k">Left team PV</div><div class="v">Org-1</div></div>
      <div class="arw2">+</div>
-     <div class="stat am"><div class="k">Org-2 PV</div><div class="v">Target</div></div>
+     <div class="stat am"><div class="k">Right team PV</div><div class="v">Org-2</div></div>
      <div class="arw2">+</div>
-     <div class="stat pu"><div class="k">Direct team/mo</div><div class="v">Target</div></div>
+     <div class="stat"><div class="k">Direct</div><div class="v" style="font-size:1.05rem">ek baar</div></div>
+     <div class="arw2">+</div>
+     <div class="stat pu"><div class="k">Direct Team</div><div class="v" style="font-size:1.05rem">har mahine</div></div>
      <div class="arw2">=</div>
      <div class="stat gd"><div class="k">Rank + Reward</div><div class="v">🏆</div></div>
-   </div>`},
+   </div>
+   <div class="note ru"><span class="l">Dhyan</span><b>Direct</b> aur <b>Direct Team</b> do <b>alag</b> cheezein hain — ek ek baar, doosra har mahine.</div>`},
  {k:'5 ranks',say:'Paanch ranks hain — Silver se Crown Director tak. Har rank pe PV target badhta hai, aur reward bhi.',
   html:`<h2>5 Ranks</h2>
-   <table class="t"><thead><tr><th>Lv</th><th>Rank</th><th>Left PV</th><th>Right PV</th><th>Direct Team / mo</th><th>Reward</th><th>% turnover</th></tr></thead><tbody>
-   <tr class="hl"><td>1</td><td><b>Silver Director</b></td><td>1,00,000</td><td>1,00,000</td><td>5,000</td><td>3N4D Goa</td><td>15%</td></tr>
-   <tr><td>2</td><td><b>Gold Director</b></td><td>5,00,000</td><td>5,00,000</td><td>25,000</td><td>Domestic Tour</td><td>10%</td></tr>
-   <tr><td>3</td><td><b>Platinum Director</b></td><td>25,00,000</td><td>25,00,000</td><td>50,000</td><td>Intl. + 2% car fund</td><td>8%</td></tr>
-   <tr><td>4</td><td><b>Diamond Director</b></td><td>50,00,000</td><td>50,00,000</td><td>1,00,000</td><td>International Tour</td><td>7%</td></tr>
-   <tr><td>5</td><td><b>Crown Director</b></td><td>2,00,00,000</td><td>2,00,00,000</td><td>2,00,000</td><td>Family Tour + 3% house fund</td><td>7%</td></tr>
+   <table class="t"><thead><tr><th>Lv</th><th>Rank</th><th>Left team PV</th><th>Right team PV</th><th>Direct<br><small>ek baar</small></th><th>Direct Team<br><small>har mahine</small></th><th>Reward</th><th>% turnover</th></tr></thead><tbody>
+   <tr class="hl"><td>1</td><td><b>Silver Director</b></td><td>1,00,000</td><td>1,00,000</td><td>5,000</td><td><b>25,000</b></td><td>3N4D Goa stay</td><td>15%</td></tr>
+   <tr><td>2</td><td><b>Gold Director</b></td><td>5,00,000</td><td>5,00,000</td><td>25,000</td><td><b>50,000</b></td><td>Domestic Tour</td><td>10%</td></tr>
+   <tr><td>3</td><td><b>Platinum Director</b></td><td>25,00,000</td><td>25,00,000</td><td>50,000</td><td><b>1,00,000</b></td><td>Intl. Tour + 2% car fund</td><td>8%</td></tr>
+   <tr><td>4</td><td><b>Diamond Director</b></td><td>50,00,000</td><td>50,00,000</td><td>50,000</td><td><b>2,00,000</b></td><td>International Tour</td><td>7%</td></tr>
+   <tr><td>5</td><td><b>Crown Director</b></td><td>2,00,00,000</td><td>2,00,00,000</td><td>50,000</td><td><b>5,00,000</b></td><td>Intl. Family Tour (1+1) + 3% house fund</td><td>7%</td></tr>
    </tbody></table>
-   <div class="note ok"><span class="l">Monthly vs one-time</span><b>Left PV aur Right PV har mahine</b> maintain karne hote hain. <b>Direct Team ka target sirf EK BAAR</b> — pehli baar us rank pe qualify karne ke liye. <b>Qualify hone ke baad aage Direct Team ki zaroorat nahi.</b></div>`},
+   <div class="note ok"><span class="l">Direct — EK BAAR</span>"Sales by Direct Joiners" — jinko tumne khud sponsor kiya, unki sale. Ye target <b>ek hi baar</b> pura karna hai. Ho gaya to <b>baat khatam</b>, dobara nahi dekha jaayega.</div>
+   <div class="note wa"><span class="l">Direct Team — HAR MAHINE</span>"Direct Team Sales" — ye <b>monthly</b> target hai. Jaise tum <b>Silver</b> pe ho → us mahine <b>25,000 PV</b> ka direct-team business karna hi padega, <b>tabhi agle mahine</b> us rank ka benefit milega. Nahi kiya to us mahine ka benefit nahi.</div>
+   <div class="note ru"><span class="l">Left / Right</span><b>Org-1 = Left team PV</b> · <b>Org-2 = Right team PV</b> — binary tree ki dono legs.</div>`},
  {k:'Qualify PV se, pool PV+GV se',say:'Ek zaroori baat — achiever <b>PV se qualify</b> karta hai, par jab <b>distribution</b> hota hai to pool company ke <b>total PV + total GV</b> pe banta hai.',
   html:`<h2>⚠️ Qualify vs Distribution — dono alag base</h2>
    <div class="big">
-     <div class="stat cy"><div class="k">Qualify karne ke liye</div><div class="v" style="font-size:1.2rem">Sirf PV</div><div class="n">Org-1 / Org-2 / direct team ke PV target</div></div>
+     <div class="stat cy"><div class="k">Qualify karne ke liye</div><div class="v" style="font-size:1.2rem">Sirf PV</div><div class="n">Left/Right team PV + Direct + Direct Team ke target</div></div>
      <div class="stat am"><div class="k">Pool banane ke liye</div><div class="v" style="font-size:1.2rem">PV + GV</div><div class="n">company ka poora month turnover</div></div>
    </div>
    <div class="note ru"><span class="l">Example</span>Mahine ke end me company ka <b>PV turnover</b> + <b>GV turnover</b> jodo — jo total bane, har rank ka % <b>usi total</b> pe lagega. Rank ke target PV se qualify hote ho, par paisa PV+GV ke total me se milta hai.</div>`},
@@ -1023,7 +1028,7 @@ const DECK_RULES=[
    <table class="t"><thead><tr><th>Incentive</th><th>Kis pe</th><th>Kitna</th></tr></thead><tbody>
    <tr><td><b>Startup</b></td><td>Direct PV milestones</td><td>3,000 → ₹2,100 · 10,000 → +₹3,000 (total 51%), one-time</td></tr>
    <tr><td><b>Mentor's</b></td><td><b>Sponsor tree</b> (binary nahi)</td><td>5 levels × 7% of BPI = max 35%, capping-free</td></tr>
-   <tr><td><b>Achievers</b></td><td>Qualify <b>PV se</b> (Org1+Org2 + monthly direct)</td><td>Pool = company ke <b>PV+GV</b> ka % ÷ qualifiers · <b>aakhri 3 qualified levels</b></td></tr>
+   <tr><td><b>Achievers</b></td><td>Qualify <b>PV se</b> (Left+Right team PV · Direct ek baar · Direct Team har mahine)</td><td>Pool = company ke <b>PV+GV</b> ka % ÷ qualifiers · <b>aakhri 3 qualified levels</b></td></tr>
    </tbody></table>
    <div class="note ok"><span class="l">Capping levels</span>8 levels — Self PV 250 se shuru (cap 1,000 PV/day) aur 5,000 PV tak (cap 12,000 PV/day). 250 se kam = koi payout nahi.</div>`},
  {k:'Ab confirm ho chuka',say:'Ye saari cheezein ab <b>clear</b> ho chuki hain — inme koi confusion nahi.',
@@ -1051,7 +1056,7 @@ const DECK_RULES=[
    <tr><td>Strong / weak rule?</td><td><b>Chalu hai</b> — total (carry + aaj) se decide. Weak pe wash nahi → strong pe bhi nahi</td></tr>
    <tr><td>Point kitne type?</td><td><b>4</b> — Self · Direct · Direct Team · Team</td></tr>
    <tr><td>Startup ki time limit?</td><td><b>Admin</b> jo chahe set kare (din ya mahine), baad me badal bhi sakta hai</td></tr>
-   <tr><td>Achievers ka Direct Team target?</td><td>Table me hai — <b>sirf ek baar</b> qualify karne ke liye</td></tr>
+   <tr><td>Achievers — Direct vs Direct Team?</td><td><b>Direct = ek baar</b> · <b>Direct Team = har mahine</b> (do alag column)</td></tr>
    <tr><td>Bill cancel / stock return?</td><td><b>Poora flow reverse</b> — stock, commission, wallet sab</td></tr>
    <tr><td>Payout?</td><td>Mahine me <b>1 baar</b> · <b>TDS 2%</b></td></tr>
    </tbody></table>`},
