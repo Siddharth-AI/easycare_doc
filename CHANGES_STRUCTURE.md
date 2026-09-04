@@ -186,17 +186,33 @@ WH                              WH
 
 ---
 
-## 10. Achievers — Direct Team target
+## 10. Achievers — Direct aur Direct Team DO ALAG cheezein
 
-**Client:** *"pv left 1lakh right 1lakh, direct 5000, direct team 25k. yah monthly hai and yah 1 time hai qulify karne ke liye"*
+**Client:** *"direct and direct team do chize hai... jo direct hai vah one time hai mil gya baat khtm and jo direct team hai vah monthly hai... agr jese silver pe hai to us mahine use itna karna pdega to hi next month vah utna benefit le skta hai"*
 
-| Lv | Rank | Left PV | Right PV | Direct/mahina | Direct Team |
-|---|---|---|---|---|---|
-| 1 | Silver Director | 1,00,000 | 1,00,000 | 5,000 | **25,000** |
-| 2–5 | — | (pehle jaisa) | (pehle jaisa) | (pehle jaisa) | ❓ pending |
+> ⚠️ **Humne galti ki thi** — sheet me **do alag column** hain ("Sales by Direct Joiners" aur "Direct Team Sales (Monthly)"), par humne dono ko **ek hi column me merge** kar diya tha. Uske andar L1–L3 ke numbers Direct column se aur L4–L5 ke Direct Team column se aa gaye the — poori tarah mixed. Aur note bhi **ulta** likha tha.
 
-- Left PV / Right PV / Direct → **har mahine** maintain
-- **Direct Team → sirf ek baar**, pehli baar qualify karne ke liye. Uske baad zaroorat nahi
+**Sahi table (client ki original sheet se):**
+
+| Lv | Rank | Left team PV<br>(Org-1) | Right team PV<br>(Org-2) | **Direct**<br>(ek baar) | **Direct Team**<br>(har mahine) | Reward | % Turnover |
+|---|---|---|---|---|---|---|---|
+| 1 | Silver Director | 1,00,000 | 1,00,000 | 5,000 | **25,000** | 3N4D Goa stay | 15% |
+| 2 | Gold Director | 5,00,000 | 5,00,000 | 25,000 | **50,000** | Domestic Tour | 10% |
+| 3 | Platinum Director | 25,00,000 | 25,00,000 | 50,000 | **1,00,000** | Intl. Tour + 2% car fund | 8% |
+| 4 | Diamond Director | 50,00,000 | 50,00,000 | 50,000 | **2,00,000** | International Tour | 7% |
+| 5 | Crown Director | 2,00,00,000 | 2,00,00,000 | 50,000 | **5,00,000** | Intl. Family Tour (1+1) + 3% house fund | 7% |
+
+- **Org-1 = Left team PV** · **Org-2 = Right team PV**
+- **Direct** = **ek baar**. Ho gaya to baat khatam
+- **Direct Team** = **har mahine**. Silver pe ho to us mahine 25,000 PV karna hi padega, tabhi agle mahine benefit
+
+| File | Kya badla |
+|---|---|
+| `index.html` | Achievers table — missing column add, L4/L5 values theek, L5 reward me "(1+1)"; neeche wala callout poora rewrite (monthly/one-time ulta tha); overview card |
+| `05-point-incentive-module/POINT_INCENTIVE_INTERACTIVE.html` | "5 Ranks" table, upar wala stat-row, monthly/one-time note, qualify-vs-distribution text, confirm-table row |
+| `QUESTIONS.md` | Q5 poora rewrite |
+
+**Nahi badla:** pool ka hisaab (30000 / 40000 / 53333 / 70000 / 1,75,000 → total 1,63,333) aur "aakhri 3 level" rule — ye client ki sheet se pehle se hi match kar rahe the.
 
 ---
 
